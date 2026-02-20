@@ -11,6 +11,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { DataJudClient } from '../providers/datajud/datajud.client.js';
 import { mapDataJudToUnificado } from '../providers/datajud/datajud.mapper.js';
+import { ALL_TRIBUNAIS_ALIASES } from '../providers/datajud/datajud.all-tribunais.js';
 import { normalizeCnj } from '../utils/cnj-validator.js';
 import { transformToAppSheet } from '../transformers/appsheet.transformer.js';
 import { dispatchToAppSheet } from './appsheet-dispatcher.service.js';
@@ -20,7 +21,7 @@ import { logger } from '../utils/logger.js';
 
 const DATA_DIR = join(process.cwd(), 'data');
 const DOCS_FILE = join(DATA_DIR, 'monitored-docs.json');
-const RATE_LIMIT_DELAY_MS = 3000;
+const RATE_LIMIT_DELAY_MS = 500;
 
 export interface MonitoredDoc {
   tipo: 'cpf' | 'cnpj';
@@ -49,7 +50,10 @@ export class CpfMonitorService {
 
   constructor() {
     this.client = new DataJudClient();
-    this.tribunalAliases = buildAliases(env.MONITOR_TRIBUNAIS);
+    this.tribunalAliases =
+      env.MONITOR_TRIBUNAIS.trim().toLowerCase() === 'all'
+        ? [...ALL_TRIBUNAIS_ALIASES]
+        : buildAliases(env.MONITOR_TRIBUNAIS);
   }
 
   async runCycle(): Promise<DocCycleResult> {
@@ -134,7 +138,9 @@ export class CpfMonitorService {
     let nameHits = 0;
 
     // ── Pass 1: busca por CPF/CNPJ (partes.cpfCnpj + partes.documento) ──
-    for (const alias of this.tribunalAliases) {
+    const total = this.tribunalAliases.length;
+    for (let aliasIdx = 0; aliasIdx < total; aliasIdx++) {
+      const alias = this.tribunalAliases[aliasIdx]!;
       try {
         const response = await this.client.search(alias, {
           query: {
@@ -160,6 +166,11 @@ export class CpfMonitorService {
             if (!foundCnjs.has(formatted)) { foundCnjs.add(formatted); docHits++; }
           }
         }
+
+        logger.debug(
+          { progress: `${aliasIdx + 1}/${total}`, alias, hits_so_far: foundCnjs.size },
+          `Varrendo ${aliasIdx + 1}/${total}: ${alias}... (${foundCnjs.size} hits)`,
+        );
 
         await sleep(RATE_LIMIT_DELAY_MS);
       } catch {
