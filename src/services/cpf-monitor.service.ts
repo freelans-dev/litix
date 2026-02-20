@@ -128,14 +128,20 @@ export class CpfMonitorService {
 
   private async checkDocument(entry: MonitoredDoc): Promise<number> {
     const doc = entry.valor.replace(/\D/g, '');
+    const docStart = Date.now();
     const foundCnjs = new Set<string>();
+    let docHits = 0;
+    let nameHits = 0;
 
+    // ── Pass 1: busca por CPF/CNPJ (partes.cpfCnpj + partes.documento) ──
     for (const alias of this.tribunalAliases) {
       try {
         const response = await this.client.search(alias, {
           query: {
             bool: {
               should: [
+                { term: { 'partes.cpfCnpj': doc } },
+                { term: { 'partes.documento': doc } },
                 { match: { 'partes.cpfCnpj': doc } },
                 { match: { 'partes.documento': doc } },
               ],
@@ -151,15 +157,59 @@ export class CpfMonitorService {
           const raw = hit._source?.numeroProcesso as string | undefined;
           if (raw) {
             const formatted = normalizeCnj(raw) ?? raw;
-            foundCnjs.add(formatted);
+            if (!foundCnjs.has(formatted)) { foundCnjs.add(formatted); docHits++; }
           }
         }
 
         await sleep(RATE_LIMIT_DELAY_MS);
       } catch {
-        // Skip this alias on error — continue to next
+        // Skip alias on error
       }
     }
+
+    // ── Pass 2: fallback por nome da parte (se nada foi encontrado no Pass 1) ──
+    if (foundCnjs.size === 0 && entry.nome) {
+      logger.debug({ nome: entry.nome }, 'Monitor Doc: nenhum hit por documento, tentando fallback por nome');
+
+      for (const alias of this.tribunalAliases) {
+        try {
+          const response = await this.client.search(alias, {
+            query: {
+              match_phrase: { 'partes.nome': entry.nome },
+            },
+            size: 50,
+            _source: ['numeroProcesso'],
+          });
+
+          const hits = response.hits?.hits ?? [];
+          for (const hit of hits) {
+            const raw = hit._source?.numeroProcesso as string | undefined;
+            if (raw) {
+              const formatted = normalizeCnj(raw) ?? raw;
+              if (!foundCnjs.has(formatted)) { foundCnjs.add(formatted); nameHits++; }
+            }
+          }
+
+          await sleep(RATE_LIMIT_DELAY_MS);
+        } catch {
+          // Skip alias on error
+        }
+      }
+    }
+
+    const docMs = Date.now() - docStart;
+    logger.info(
+      {
+        nome: entry.nome,
+        valor: entry.valor,
+        tribunais: this.tribunalAliases.length,
+        encontrados: foundCnjs.size,
+        via_documento: docHits,
+        via_nome: nameHits,
+        ms: docMs,
+      },
+      `Monitor Doc: varredura concluída em ${docMs}ms`,
+    );
 
     entry.ultima_verificacao = new Date().toISOString();
 
