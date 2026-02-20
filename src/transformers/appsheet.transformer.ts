@@ -10,13 +10,13 @@ import { calculateCompleteness } from '../services/merge.service.js';
  *
  * Groups:
  *   1. Gestão       — manual fields, always empty from API (13)
- *   2. Processo     — API-filled process fields (19)
+ *   2. Processo     — API-filled process fields (21)
  *   3. Tracking     — system-filled tracking fields (5)
  *   4. Internacional — English/international fields (8)
  *   5. Meta         — diagnostic extras (5)
  *   6. Partes       — flat party grid 1–10 (40)
  *
- * Total: ~90 fields
+ * Total: 92 fields
  */
 export interface AppSheetProcesso {
   // ── 1. Gestão (manual — always empty from API) ──
@@ -36,14 +36,16 @@ export interface AppSheetProcesso {
 
   // ── 2. Processo (API-filled) ──
   numero: string;           // CNJ number
-  distribuicao: string;     // Filing date
+  distribuicao: string;     // Filing date (current/highest instance)
+  distribuicao_origem: string; // Original filing date (1st instance, multi-degree cases)
   autor: string;            // Active parties (joined)
   reu: string;              // Passive parties (joined)
   caso: string;             // Case summary (class + main subject)
   foro: string;             // Court jurisdiction
   tipo: string;             // Legal area (PT)
   natureza: string;         // Legal nature (PT)
-  classe: string;           // Formal class name
+  classe: string;           // Formal class name (current/highest instance)
+  classe_origem: string;    // Original procedural class (1st instance, multi-degree cases)
   valor: number | null;     // Claim value
   status: string;           // Process status
   justica: string;          // Justice branch (PT)
@@ -138,6 +140,7 @@ export function transformToAppSheet(processo: ProcessoUnificado): AppSheetProces
     // ── 2. Processo ──
     numero: processo.cnj,
     distribuicao: processo.dataDistribuicao ? formatDate(processo.dataDistribuicao) : '',
+    distribuicao_origem: processo.dataDistribuicaoOrigem ? formatDate(processo.dataDistribuicaoOrigem) : '',
     autor: poloAtivo.map((p) => p.nome).join('; '),
     reu: poloPassivo.map((p) => p.nome).join('; '),
     caso: buildCaso(processo.nome, assuntoPrincipal),
@@ -145,6 +148,7 @@ export function transformToAppSheet(processo: ProcessoUnificado): AppSheetProces
     tipo: processo.area ?? '',
     natureza: processo.area ?? '',
     classe: processo.nome ?? '',
+    classe_origem: processo.classeOrigem ?? '',
     valor: processo.valor ?? null,
     status: processo.situacao ?? '',
     justica: mapJustica(processo.cnj),

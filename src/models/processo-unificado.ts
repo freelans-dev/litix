@@ -45,4 +45,8 @@ export interface ProcessoUnificado {
   mergedFrom?: DadosOrigem[];
   completenessScore?: number;
   ultimaAtualizacao?: Date;
+  /** Original procedural class from lower instance, populated on multi-degree merges. */
+  classeOrigem?: string;
+  /** Original filing date from lower instance, populated on multi-degree merges. */
+  dataDistribuicaoOrigem?: Date;
 }

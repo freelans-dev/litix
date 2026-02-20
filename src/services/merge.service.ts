@@ -9,6 +9,9 @@ import type { Anexo } from '../models/anexo.js';
  * Strategy:
  * - Scalar fields: non-null wins. If both non-null, prefer the more complete source.
  * - Arrays: union-merge with deduplication by natural key.
+ * - Multi-instance: when providers return different court degrees, the higher
+ *   degree wins for nome/instancia/dataDistribuicao, and the lower degree's
+ *   class/date are preserved in classeOrigem/dataDistribuicaoOrigem.
  * - Recalculates completeness score after merge.
  */
 export function mergeProcessos(a: ProcessoUnificado, b: ProcessoUnificado): ProcessoUnificado {
@@ -37,8 +40,48 @@ export function mergeProcessos(a: ProcessoUnificado, b: ProcessoUnificado): Proc
     ultimaAtualizacao: new Date(),
   };
 
+  // ── Multi-instance override ──────────────────────────────────────────────
+  // When two sources report different court degrees (e.g. DataJud → G1,
+  // Codilo → G2), they are complementary records of the same lawsuit.
+  // Promote the higher-degree metadata and preserve the lower-degree origin.
+  const multiInst = detectMultiInstancia(a, b);
+  if (multiInst) {
+    const { higher, lower } = multiInst;
+    merged.nome             = higher.nome ?? merged.nome;
+    merged.instancia        = higher.instancia;
+    merged.dataDistribuicao = higher.dataDistribuicao ?? merged.dataDistribuicao;
+    merged.classeOrigem           = lower.nome ?? undefined;
+    merged.dataDistribuicaoOrigem = lower.dataDistribuicao ?? undefined;
+    // Prefer higher-degree tribunal context but keep sigla from either
+    if (higher.tribunal) {
+      merged.tribunal = {
+        ...higher.tribunal,
+        sigla: higher.tribunal.sigla || lower.tribunal?.sigla || '',
+      };
+    }
+  }
+
   merged.completenessScore = calculateCompleteness(merged);
   return merged;
+}
+
+/**
+ * Detects multi-instance scenario: both sources have instancia set,
+ * they differ, and the class names differ (ruling out duplicate data).
+ * Returns { higher, lower } or null if not multi-instance.
+ */
+function detectMultiInstancia(
+  a: ProcessoUnificado,
+  b: ProcessoUnificado,
+): { higher: ProcessoUnificado; lower: ProcessoUnificado } | null {
+  if (a.instancia == null || b.instancia == null) return null;
+  if (a.instancia === b.instancia) return null;
+  // Only flag if class names are actually different (not just missing)
+  if (a.nome && b.nome && normalizeText(a.nome) === normalizeText(b.nome)) return null;
+
+  return a.instancia > b.instancia
+    ? { higher: a, lower: b }
+    : { higher: b, lower: a };
 }
 
 export function calculateCompleteness(p: ProcessoUnificado): number {
