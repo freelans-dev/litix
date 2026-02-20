@@ -2,7 +2,7 @@ import type { ProcessoUnificado } from '../models/processo-unificado.js';
 import type { MonitoramentoResult } from '../models/monitoramento.js';
 import type { ProviderStatus } from './provider-status.js';
 
-export type ProviderName = 'codilo' | 'judit' | 'escavador' | 'predictus';
+export type ProviderName = 'codilo' | 'judit' | 'escavador' | 'predictus' | 'datajud';
 
 export interface SearchByCnjOptions {
   strategy?: 'race' | 'fallback' | 'primary-only';

@@ -35,8 +35,13 @@ const envSchema = z.object({
   JUDIT_TIMEOUT_MS: z.coerce.number().default(30000),
   JUDIT_CACHE_TTL_DAYS: z.coerce.number().default(7),
 
+  // DataJud (CNJ public API — free)
+  DATAJUD_API_KEY: z.string().default('cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw=='),
+  DATAJUD_BASE_URL: z.string().url().default('https://api-publica.datajud.cnj.jus.br'),
+  DATAJUD_TIMEOUT_MS: z.coerce.number().default(15000),
+
   // Orchestration
-  PRIMARY_PROVIDER: z.enum(['codilo', 'judit', 'escavador', 'predictus']).default('judit'),
+  PRIMARY_PROVIDER: z.enum(['codilo', 'judit', 'escavador', 'predictus', 'datajud']).default('judit'),
   ORCHESTRATION_STRATEGY: z.enum(['race', 'fallback', 'primary-only']).default('race'),
   RACE_TIMEOUT_MS: z.coerce.number().default(45000),
   POLL_INTERVAL_MS: z.coerce.number().default(5000),

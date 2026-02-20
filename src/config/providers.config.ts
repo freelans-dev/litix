@@ -32,6 +32,12 @@ export const juditConfig = {
   cacheTtlDays: env.JUDIT_CACHE_TTL_DAYS,
 } as const;
 
+export const datajudConfig = {
+  apiKey: env.DATAJUD_API_KEY,
+  baseUrl: env.DATAJUD_BASE_URL,
+  timeoutMs: env.DATAJUD_TIMEOUT_MS,
+} as const;
+
 export const orchestrationConfig = {
   primaryProvider: env.PRIMARY_PROVIDER,
   strategy: env.ORCHESTRATION_STRATEGY,

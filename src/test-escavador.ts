@@ -122,7 +122,7 @@ function printComparison(esc: AppSheetProcesso, cod: AppSheetProcesso | null) {
     console.log(`Campos iguais (ambos tem/nao tem): ${equal}`);
     console.log(`Escavador melhor (E): ${escBetter}`);
     console.log(`Codilo melhor (C):    ${codBetter}`);
-    console.log(`\nMovimentacoes: Escavador=${esc.total_movimentacoes} vs Codilo=${cod.total_movimentacoes}`);
+    console.log(`\nMovimentacoes: Escavador=${esc.steps} vs Codilo=${cod.steps}`);
   }
 }
 
