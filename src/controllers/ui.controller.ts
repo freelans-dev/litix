@@ -20,303 +20,905 @@ function getMainPageHtml(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Litix - Consulta Processual</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>GregoSantos. · Litix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
-    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-    .dot-green { background: #22c55e; }
-    .dot-red { background: #ef4444; }
-    .dot-yellow { background: #eab308; }
-    pre.json { max-height: 500px; overflow: auto; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0c0c0e;
+      --surface:    #161618;
+      --surface-2:  #1e1e21;
+      --border:     #2a2a2e;
+      --border-2:   #3a3a3f;
+      --gold:       #c9a84c;
+      --gold-dim:   rgba(201,168,76,.10);
+      --gold-hover: rgba(201,168,76,.18);
+      --text:       #e8e6e2;
+      --text-2:     #9b9a9e;
+      --text-3:     #5a5a5f;
+      --green:      #4caf7a;
+      --amber:      #c9a84c;
+      --red:        #c95a5a;
+      --serif:      'DM Serif Display', Georgia, serif;
+      --sans:       'DM Sans', system-ui, sans-serif;
+      --mono:       'DM Mono', 'Fira Code', monospace;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border-2); }
+
+    /* ── Layout ── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 32px; max-width: 1100px; margin: 0 auto;
+    }
+    .brand { display: flex; align-items: baseline; gap: 16px; }
+    .brand-name {
+      font-family: var(--serif); font-size: 22px; color: var(--text);
+      letter-spacing: -0.3px;
+    }
+    .brand-sep { color: var(--border-2); font-size: 18px; }
+    .brand-sub {
+      font-family: var(--sans); font-size: 11px; font-weight: 500;
+      letter-spacing: 3px; text-transform: uppercase; color: var(--text-3);
+    }
+    .header-right { display: flex; align-items: center; gap: 20px; }
+    #provider-status { display: flex; align-items: center; gap: 14px; }
+    .status-pill {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px; color: var(--text-3); letter-spacing: .5px;
+    }
+    .dot {
+      width: 6px; height: 6px;
+      background: var(--border-2);
+      display: inline-block;
+    }
+    .dot-green { background: var(--green); }
+    .dot-amber { background: var(--amber); }
+    .dot-red   { background: var(--red); }
+    .docs-link {
+      font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-3); text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: color .2s, border-color .2s;
+    }
+    .docs-link:hover { color: var(--gold); border-color: var(--gold); }
+
+    /* ── Main ── */
+    main { padding: 40px 32px 80px; max-width: 1100px; margin: 0 auto; }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-3); margin-bottom: 10px;
+    }
+
+    /* ── Card surface ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 20px 24px;
+    }
+
+    /* ── API Key row ── */
+    .apikey-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .apikey-label {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--gold); white-space: nowrap; flex-shrink: 0;
+    }
+    .apikey-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      font-family: var(--mono); font-size: 12px; color: var(--text-2);
+      caret-color: var(--gold);
+    }
+    .apikey-input::placeholder { color: var(--text-3); }
+
+    /* ── Form ── */
+    .form-grid {
+      display: grid; grid-template-columns: 120px 1fr; gap: 0;
+      border: 1px solid var(--border); margin-bottom: 16px;
+    }
+    .form-type {
+      background: var(--surface-2); border-right: 1px solid var(--border);
+      padding: 0;
+    }
+    .form-type select {
+      width: 100%; height: 100%; background: transparent; border: none;
+      outline: none; color: var(--text-2); font-family: var(--sans);
+      font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+      padding: 0 16px; cursor: pointer; appearance: none;
+    }
+    .form-valor { display: flex; align-items: center; background: var(--surface); }
+    .form-valor input {
+      flex: 1; background: transparent; border: none; outline: none;
+      font-family: var(--mono); font-size: 14px; color: var(--text);
+      padding: 14px 20px; caret-color: var(--gold);
+    }
+    .form-valor input::placeholder { color: var(--text-3); }
+
+    /* ── Pills ── */
+    .pills-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      font-family: var(--sans); font-size: 11px; font-weight: 500;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 6px 14px; cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-3);
+      transition: all .18s;
+    }
+    .pill.active {
+      border-color: var(--gold); background: var(--gold-dim);
+      color: var(--gold);
+    }
+    .pill:hover:not(.active) { border-color: var(--border-2); color: var(--text-2); }
+
+    /* ── Options row ── */
+    .options-row {
+      display: flex; align-items: center; gap: 24px; margin-bottom: 20px;
+    }
+    .toggle-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--text-2); cursor: pointer;
+      user-select: none;
+    }
+    .toggle-label input[type="checkbox"] {
+      accent-color: var(--gold); width: 14px; height: 14px; cursor: pointer;
+    }
+
+    /* ── Actions row ── */
+    .actions-row { display: flex; gap: 10px; margin-bottom: 32px; }
+    .btn-primary {
+      font-family: var(--sans); font-size: 11px; font-weight: 600;
+      letter-spacing: 2px; text-transform: uppercase;
+      padding: 10px 28px; cursor: pointer;
+      background: var(--gold); color: #0c0c0e; border: none;
+      transition: opacity .18s;
+    }
+    .btn-primary:hover { opacity: .85; }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-secondary {
+      font-family: var(--sans); font-size: 11px; font-weight: 500;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 10px 24px; cursor: pointer;
+      background: transparent; color: var(--text-2);
+      border: 1px solid var(--border); transition: all .18s;
+    }
+    .btn-secondary:hover { border-color: var(--border-2); color: var(--text); }
+
+    /* ── Batch area ── */
+    #batch-area { margin-bottom: 24px; display: none; }
+    .batch-textarea {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--mono); font-size: 12px;
+      padding: 14px 18px; resize: vertical; outline: none;
+      caret-color: var(--gold); min-height: 120px;
+    }
+    .batch-textarea::placeholder { color: var(--text-3); }
+
+    /* ── Spinner ── */
+    #loading {
+      display: none; padding: 48px 0; text-align: center;
+    }
+    .spinner {
+      width: 28px; height: 28px; margin: 0 auto 12px;
+      border: 2px solid var(--border-2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-3); }
+
+    /* ── Result area ── */
+    #result-area { display: none; margin-bottom: 48px; }
+    .result-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+    }
+    .result-title {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-3);
+    }
+    .result-badges { display: flex; gap: 8px; }
+    .badge {
+      font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+      padding: 3px 10px; border: 1px solid;
+    }
+    .badge-green  { color: var(--green); border-color: var(--green); background: rgba(76,175,122,.08); }
+    .badge-red    { color: var(--red);   border-color: var(--red);   background: rgba(201,90,90,.08); }
+    .badge-amber  { color: var(--amber); border-color: var(--amber); background: var(--gold-dim); }
+    .badge-muted  { color: var(--text-3); border-color: var(--border); }
+    .badge-tempo  { color: var(--text-3); border-color: var(--border); font-family: var(--mono); }
+
+    /* ── Process card ── */
+    .process-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left-width: 3px;
+      padding: 20px 24px;
+      cursor: pointer;
+      transition: background .18s;
+      position: relative;
+    }
+    .process-card:hover { background: var(--surface-2); }
+    .process-card + .process-card { margin-top: 8px; }
+
+    .card-cnj {
+      font-family: var(--mono); font-size: 13px; color: var(--gold);
+      letter-spacing: .5px; margin-bottom: 6px;
+    }
+    .card-class {
+      font-family: var(--serif); font-size: 17px; color: var(--text);
+      margin-bottom: 10px; line-height: 1.3;
+    }
+    .card-parties {
+      font-size: 12px; color: var(--text-2); margin-bottom: 12px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .card-meta {
+      display: flex; gap: 20px; flex-wrap: wrap; align-items: center;
+    }
+    .card-meta-item {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px; color: var(--text-3);
+    }
+    .card-meta-item strong { color: var(--text-2); font-weight: 500; }
+    .card-score {
+      margin-left: auto;
+      font-family: var(--mono); font-size: 11px; padding: 2px 10px;
+      border: 1px solid; opacity: .9;
+    }
+    .card-cta {
+      position: absolute; top: 20px; right: 20px;
+      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    /* ── History table ── */
+    .history-section { margin-top: 8px; }
+    .history-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%; border-collapse: collapse;
+      font-size: 12px;
+    }
+    thead tr {
+      border-bottom: 1px solid var(--border);
+    }
+    thead th {
+      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--text-3); font-weight: 500; padding: 10px 16px;
+      text-align: left; white-space: nowrap;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    tbody tr:hover { background: var(--surface); }
+    tbody td {
+      padding: 10px 16px; color: var(--text-2); vertical-align: middle;
+    }
+    td.mono { font-family: var(--mono); font-size: 11px; }
+    td.ok   { color: var(--green); }
+    td.erro { color: var(--red); }
+    td.disp-ok   { color: var(--green); }
+    td.disp-fail { color: var(--red); }
+    td.disp-off  { color: var(--text-3); }
+    .history-empty {
+      text-align: center; padding: 40px; color: var(--text-3);
+      font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+    }
+
+    /* ── Modal ── */
+    #modal {
+      position: fixed; inset: 0; z-index: 200;
+      display: none; align-items: flex-start; justify-content: flex-end;
+    }
+    #modal.open { display: flex; }
+    .modal-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(2px);
+    }
+    .modal-panel {
+      position: relative; z-index: 1;
+      width: 520px; max-width: 100vw; height: 100vh;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .modal-cnj {
+      font-family: var(--mono); font-size: 13px; color: var(--gold);
+    }
+    .modal-close {
+      background: none; border: none; color: var(--text-3);
+      font-size: 20px; cursor: pointer; padding: 2px 6px;
+      line-height: 1; transition: color .15s;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { flex: 1; overflow-y: auto; padding: 24px; }
+    .modal-group { margin-bottom: 28px; }
+    .modal-group-title {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 14px;
+      padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    }
+    .modal-row {
+      display: flex; gap: 12px; margin-bottom: 10px; font-size: 13px;
+    }
+    .modal-key {
+      color: var(--text-3); flex: 0 0 130px; font-size: 11px;
+      padding-top: 1px; white-space: nowrap;
+    }
+    .modal-val { color: var(--text); word-break: break-word; }
+    .modal-val.mono { font-family: var(--mono); font-size: 12px; }
+    .modal-movs {
+      font-size: 11px; color: var(--text-2); line-height: 1.7;
+    }
+    .modal-movs span { display: block; }
+    .modal-link {
+      color: var(--gold); text-decoration: none; font-size: 12px;
+      border-bottom: 1px solid transparent; transition: border-color .15s;
+    }
+    .modal-link:hover { border-color: var(--gold); }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 20px 32px;
+      text-align: center;
+    }
+    .footer-text {
+      font-size: 11px; letter-spacing: 1px; color: var(--text-3);
+    }
+    .footer-text em { font-family: var(--serif); font-style: normal; color: var(--text-2); }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen text-gray-800">
+<body>
 
-  <!-- Header -->
-  <header class="bg-white border-b shadow-sm">
-    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <h1 class="text-2xl font-bold text-indigo-700">Litix</h1>
-        <span class="text-sm text-gray-400">Consulta Processual</span>
-      </div>
-      <div class="flex items-center gap-4">
-        <div id="provider-status" class="flex items-center gap-3 text-xs"></div>
-        <a href="/api/docs" class="text-sm text-indigo-600 hover:underline">API Docs</a>
+<!-- ══ Header ══════════════════════════════════════════════ -->
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-name">GregoSantos.</span>
+      <span class="brand-sep">|</span>
+      <span class="brand-sub">Litix</span>
+    </div>
+    <div class="header-right">
+      <div id="provider-status"></div>
+      <a href="/api/docs" class="docs-link">API Docs</a>
+    </div>
+  </div>
+</header>
+
+<!-- ══ Main ════════════════════════════════════════════════ -->
+<main>
+
+  <!-- API Key -->
+  <div class="apikey-row">
+    <span class="apikey-label">API Key</span>
+    <input id="api-key" class="apikey-input" type="password" placeholder="Bearer token — salvo no navegador" autocomplete="off" />
+  </div>
+
+  <!-- Search form -->
+  <div class="section-label">Consulta</div>
+  <div class="form-grid">
+    <div class="form-type">
+      <select id="tipo">
+        <option value="cnj">CNJ</option>
+        <option value="cpf">CPF</option>
+        <option value="cnpj">CNPJ</option>
+        <option value="oab">OAB</option>
+        <option value="nome">Nome</option>
+      </select>
+    </div>
+    <div class="form-valor">
+      <input id="valor" type="text" placeholder="0000000-00.0000.0.00.0000" autocomplete="off" />
+    </div>
+  </div>
+
+  <!-- Provider pills -->
+  <div class="section-label">Providers</div>
+  <div class="pills-row" id="pills">
+    <button class="pill active" data-provider="judit">Judit</button>
+    <button class="pill active" data-provider="codilo">Codilo</button>
+    <button class="pill active" data-provider="escavador">Escavador</button>
+    <button class="pill active" data-provider="predictus">Predictus</button>
+  </div>
+
+  <!-- Options -->
+  <div class="options-row">
+    <label class="toggle-label">
+      <input type="checkbox" id="dispatch" checked>
+      Enviar para Sheets
+    </label>
+    <label class="toggle-label">
+      <input type="checkbox" id="completa">
+      Merge completo
+    </label>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions-row">
+    <button id="btn-consultar" class="btn-primary">Consultar</button>
+    <button id="btn-lote" class="btn-secondary">Lote</button>
+  </div>
+
+  <!-- Batch -->
+  <div id="batch-area" class="card" style="margin-bottom:24px;">
+    <div class="section-label" style="margin-bottom:10px;">Valores — um por linha</div>
+    <textarea id="batch-values" class="batch-textarea" rows="6"
+      placeholder="0804495-71.2018.8.10.0001&#10;0001234-56.2024.8.26.0100"></textarea>
+    <div style="margin-top:12px;">
+      <button id="btn-enviar-lote" class="btn-primary">Enviar Lote</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="spinner-label">Consultando</div>
+  </div>
+
+  <!-- Result -->
+  <div id="result-area">
+    <div class="result-header">
+      <span class="result-title">Resultado</span>
+      <div class="result-badges">
+        <span id="badge-dispatch" class="badge" style="display:none"></span>
+        <span id="badge-tempo" class="badge badge-muted" style="display:none"></span>
+        <span id="badge-sources" class="badge badge-muted" style="display:none"></span>
       </div>
     </div>
-  </header>
+    <div id="result-cards"></div>
+  </div>
 
-  <main class="max-w-6xl mx-auto px-6 py-8 space-y-6">
-
-    <!-- API Key -->
-    <div class="bg-white rounded-lg border p-4">
-      <label class="block text-sm font-medium text-gray-600 mb-1">API Key</label>
-      <input id="api-key" type="password" placeholder="Cole sua API_ACCESS_KEY aqui"
-        class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-      <p class="text-xs text-gray-400 mt-1">Salvo no navegador. Necessario para autenticar chamadas a API.</p>
+  <!-- History -->
+  <div class="history-section">
+    <div class="history-header">
+      <div class="section-label" style="margin:0">Histórico</div>
     </div>
-
-    <!-- Search Form -->
-    <div class="bg-white rounded-lg border p-6 space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">Tipo</label>
-          <select id="tipo" class="w-full border rounded px-3 py-2 text-sm">
-            <option value="cnj">CNJ</option>
-            <option value="cpf">CPF</option>
-            <option value="cnpj">CNPJ</option>
-            <option value="oab">OAB</option>
-            <option value="nome">Nome</option>
-          </select>
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-600 mb-1">Valor</label>
-          <input id="valor" type="text" placeholder="0000000-00.0000.0.00.0000"
-            class="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1">Provider</label>
-          <select id="provider-select" class="w-full border rounded px-3 py-2 text-sm">
-            <option value="todos">Todos</option>
-            <option value="judit">Judit</option>
-            <option value="codilo">Codilo</option>
-            <option value="escavador">Escavador</option>
-            <option value="predictus">Predictus</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-6">
-        <label class="flex items-center gap-2 text-sm">
-          <input type="checkbox" id="dispatch" checked class="rounded" />
-          Enviar para AppSheet
-        </label>
-        <label class="flex items-center gap-2 text-sm">
-          <input type="checkbox" id="completa" class="rounded" />
-          Consulta completa (merge)
-        </label>
-      </div>
-
-      <div class="flex gap-3">
-        <button id="btn-consultar"
-          class="bg-indigo-600 text-white px-6 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
-          Consultar
-        </button>
-        <button id="btn-lote"
-          class="bg-gray-200 text-gray-700 px-6 py-2 rounded text-sm font-medium hover:bg-gray-300 transition">
-          Consulta em Lote
-        </button>
-      </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Tipo</th>
+            <th>Valor</th>
+            <th>Fontes</th>
+            <th>Score</th>
+            <th>Tempo</th>
+            <th>Dispatch</th>
+          </tr>
+        </thead>
+        <tbody id="history-body"></tbody>
+      </table>
+      <div id="history-empty" class="history-empty">Nenhuma consulta ainda.</div>
     </div>
+  </div>
 
-    <!-- Batch Area -->
-    <div id="batch-area" class="bg-white rounded-lg border p-6 hidden space-y-4">
-      <label class="block text-sm font-medium text-gray-600">Valores (um por linha)</label>
-      <textarea id="batch-values" rows="6" placeholder="0804495-71.2018.8.10.0001&#10;0001234-56.2024.8.26.0100&#10;..."
-        class="w-full border rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-300"></textarea>
-      <button id="btn-enviar-lote"
-        class="bg-indigo-600 text-white px-6 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition">
-        Enviar Lote
-      </button>
+</main>
+
+<!-- ══ Footer ══════════════════════════════════════════════ -->
+<footer>
+  <div class="footer-text">
+    &copy; <em>GregoSantos.</em> Advogados &nbsp;&middot;&nbsp; OABPR 3.691
+    &nbsp;&middot;&nbsp; Powered by Litix
+  </div>
+</footer>
+
+<!-- ══ Detail Modal ════════════════════════════════════════ -->
+<div id="modal">
+  <div class="modal-backdrop" onclick="closeModal()"></div>
+  <div class="modal-panel">
+    <div class="modal-head">
+      <span id="modal-cnj" class="modal-cnj">—</span>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
     </div>
-
-    <!-- Loading -->
-    <div id="loading" class="hidden text-center py-8">
-      <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-200 border-t-indigo-600"></div>
-      <p class="text-sm text-gray-500 mt-2">Consultando...</p>
-    </div>
-
-    <!-- Result -->
-    <div id="result-area" class="hidden space-y-4">
-      <div class="flex items-center gap-3">
-        <h2 class="text-lg font-semibold">Resultado</h2>
-        <span id="dispatch-badge" class="hidden text-xs px-2 py-1 rounded font-medium"></span>
-        <span id="tempo-badge" class="text-xs text-gray-400"></span>
-      </div>
-      <pre id="result-json" class="json bg-gray-900 text-green-400 p-4 rounded-lg text-xs leading-relaxed"></pre>
-    </div>
-
-    <!-- History -->
-    <div class="bg-white rounded-lg border">
-      <div class="px-6 py-4 border-b">
-        <h2 class="text-lg font-semibold">Historico de Consultas</h2>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wider">
-            <tr>
-              <th class="px-6 py-3">Hora</th>
-              <th class="px-6 py-3">Tipo</th>
-              <th class="px-6 py-3">Valor</th>
-              <th class="px-6 py-3">Status</th>
-              <th class="px-6 py-3">Providers</th>
-              <th class="px-6 py-3">Tempo</th>
-              <th class="px-6 py-3">Dispatch</th>
-            </tr>
-          </thead>
-          <tbody id="history-body" class="divide-y"></tbody>
-        </table>
-        <p id="history-empty" class="text-center text-gray-400 text-sm py-6">Nenhuma consulta ainda.</p>
-      </div>
-    </div>
-
-  </main>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
 
 <script>
-// --- State ---
+// ── State ────────────────────────────────────────────────
 const apiKeyInput = document.getElementById('api-key');
-apiKeyInput.value = localStorage.getItem('litix_api_key') || '';
-apiKeyInput.addEventListener('input', () => {
-  localStorage.setItem('litix_api_key', apiKeyInput.value);
-});
+apiKeyInput.value = localStorage.getItem('gs_litix_key') || '';
+apiKeyInput.addEventListener('input', () => localStorage.setItem('gs_litix_key', apiKeyInput.value.trim()));
 
 function getHeaders() {
   const h = { 'Content-Type': 'application/json' };
-  const key = apiKeyInput.value.trim();
-  if (key) h['Authorization'] = 'Bearer ' + key;
+  const k = apiKeyInput.value.trim();
+  if (k) h['Authorization'] = 'Bearer ' + k;
   return h;
 }
 
-// --- Provider Status ---
+// ── Provider pills ───────────────────────────────────────
+document.querySelectorAll('#pills .pill').forEach(pill => {
+  pill.addEventListener('click', () => pill.classList.toggle('active'));
+});
+
+function getActiveProviders() {
+  return Array.from(document.querySelectorAll('#pills .pill.active'))
+    .map(p => p.dataset.provider);
+}
+
+// ── Provider status ──────────────────────────────────────
 async function loadProviderStatus() {
   try {
-    const res = await fetch('/health/providers');
-    const data = await res.json();
-    const container = document.getElementById('provider-status');
-    container.innerHTML = Object.entries(data).map(([name, info]) => {
-      const dotClass = info.healthy ? 'dot-green' : info.circuitState === 'half-open' ? 'dot-yellow' : 'dot-red';
-      return '<span class="flex items-center gap-1"><span class="dot ' + dotClass + '"></span>' + name + '</span>';
+    const data = await fetch('/health/providers').then(r => r.json());
+    const el = document.getElementById('provider-status');
+    el.innerHTML = Object.entries(data).map(([name, info]) => {
+      const cls = info.healthy ? 'dot-green' : info.circuitState === 'half-open' ? 'dot-amber' : 'dot-red';
+      return '<span class="status-pill"><span class="dot ' + cls + '"></span>' + name + '</span>';
     }).join('');
   } catch {}
 }
 
-// --- Single Consultation ---
-document.getElementById('btn-consultar').addEventListener('click', async () => {
-  const tipo = document.getElementById('tipo').value;
-  const valor = document.getElementById('valor').value.trim();
-  if (!valor) return alert('Preencha o valor');
+// ── Completeness color ───────────────────────────────────
+function scoreColor(score) {
+  if (score == null) return 'var(--border-2)';
+  if (score >= 0.8) return 'var(--green)';
+  if (score >= 0.5) return 'var(--gold)';
+  return 'var(--red)';
+}
+function scoreLabel(score) {
+  if (score == null) return '—';
+  return Math.round(score * 100) + '%';
+}
 
-  const dispatch = document.getElementById('dispatch').checked;
-  const completa = document.getElementById('completa').checked;
-  const providerSelect = document.getElementById('provider-select').value;
+// ── Build result card ────────────────────────────────────
+function buildCard(p, tempoMs, dispatchStatus, sources) {
+  const score = p.completeness_score;
+  const color = scoreColor(score);
+  const div = document.createElement('div');
+  div.className = 'process-card';
+  div.style.borderLeftColor = color;
+
+  const cls   = p.classe || p.classification || '—';
+  const cnj   = p.numero || '—';
+  const autor = p.autor || '—';
+  const reu   = p.reu   || '—';
+  const trib  = [p.tribunal_en, p.instancia ? p.instancia + 'ª Inst.' : '', p.justica].filter(Boolean).join(' · ');
+  const movs  = p.steps || 0;
+  const sit   = p.status || '—';
+
+  div.innerHTML =
+    '<div class="card-cta">Ver detalhes →</div>' +
+    '<div class="card-cnj">' + esc(cnj) + '</div>' +
+    '<div class="card-class">' + esc(cls) + '</div>' +
+    '<div class="card-parties">' + esc(autor) + ' &nbsp;×&nbsp; ' + esc(reu) + '</div>' +
+    '<div class="card-meta">' +
+      (trib ? '<span class="card-meta-item"><strong>' + esc(trib) + '</strong></span>' : '') +
+      '<span class="card-meta-item"><strong>' + movs + '</strong>&nbsp;movs.</span>' +
+      '<span class="card-meta-item"><strong>' + esc(sit) + '</strong></span>' +
+      '<span class="card-score" style="color:' + color + ';border-color:' + color + '">' + scoreLabel(score) + '</span>' +
+    '</div>';
+
+  div.addEventListener('click', () => openModal(p));
+  return div;
+}
+
+// ── Show result ──────────────────────────────────────────
+function showResult(p, tempoMs, dispatchStatus, sources) {
+  const area = document.getElementById('result-area');
+  area.style.display = 'block';
+
+  // Badges
+  const bdDispatch = document.getElementById('badge-dispatch');
+  const bdTempo    = document.getElementById('badge-tempo');
+  const bdSources  = document.getElementById('badge-sources');
+
+  if (dispatchStatus) {
+    bdDispatch.style.display = '';
+    bdDispatch.textContent = dispatchStatus === 'enviado' ? 'Sheets: enviado'
+      : dispatchStatus === 'falhou' ? 'Sheets: falhou' : 'Sheets: off';
+    bdDispatch.className = 'badge ' + (dispatchStatus === 'enviado' ? 'badge-green'
+      : dispatchStatus === 'falhou' ? 'badge-red' : 'badge-muted');
+  } else {
+    bdDispatch.style.display = 'none';
+  }
+
+  if (tempoMs) {
+    bdTempo.style.display = '';
+    bdTempo.textContent = tempoMs + 'ms';
+  } else {
+    bdTempo.style.display = 'none';
+  }
+
+  if (sources && sources.length) {
+    bdSources.style.display = '';
+    bdSources.textContent = sources.join(' + ');
+  } else {
+    bdSources.style.display = 'none';
+  }
+
+  const container = document.getElementById('result-cards');
+  container.innerHTML = '';
+  if (Array.isArray(p)) {
+    p.forEach(item => {
+      if (item.status === 'ok' && item.processo) {
+        container.appendChild(buildCard(item.processo, null, item.dispatch_status, null));
+      } else {
+        const err = document.createElement('div');
+        err.className = 'card';
+        err.style.cssText = 'border-left:3px solid var(--red);margin-top:8px;';
+        err.innerHTML = '<div class="card-cnj" style="color:var(--red)">' + esc(item.valor) + '</div>' +
+          '<div style="color:var(--text-3);font-size:12px;margin-top:4px;">' + esc(item.erro || 'Erro') + '</div>';
+        container.appendChild(err);
+      }
+    });
+  } else {
+    container.appendChild(buildCard(p, tempoMs, dispatchStatus, sources));
+  }
+}
+
+// ── Modal ────────────────────────────────────────────────
+let currentProcesso = null;
+
+function openModal(p) {
+  currentProcesso = p;
+  document.getElementById('modal-cnj').textContent = p.numero || '—';
+
+  const body = document.getElementById('modal-body');
+  body.innerHTML = '';
+
+  // helper
+  function group(title, rows) {
+    const g = document.createElement('div');
+    g.className = 'modal-group';
+    g.innerHTML = '<div class="modal-group-title">' + title + '</div>';
+    rows.forEach(([k, v, isMono]) => {
+      if (v == null || v === '' || v === '0' || v === false) return;
+      const row = document.createElement('div');
+      row.className = 'modal-row';
+      row.innerHTML = '<span class="modal-key">' + k + '</span>' +
+        '<span class="modal-val' + (isMono ? ' mono' : '') + '">' + esc(String(v)) + '</span>';
+      g.appendChild(row);
+    });
+    return g;
+  }
+
+  body.appendChild(group('Processo', [
+    ['Número (CNJ)',    p.numero,        true],
+    ['Classe',         p.classe,        false],
+    ['Distribuição',   p.distribuicao,  false],
+    ['Situação',       p.status,        false],
+    ['Instância',      p.instancia != null ? p.instancia + 'ª instância' : null, false],
+    ['Área',           p.tipo,          false],
+    ['Caso',           p.caso,          false],
+    ['Foro',           p.foro,          false],
+    ['Órgão Julgador', p.orgao,         false],
+    ['Tribunal',       p.tribunal_en,   false],
+    ['Justiça',        p.justica,       false],
+    ['Valor',          p.valor ? 'R$ ' + Number(p.valor).toLocaleString('pt-BR') : null, false],
+    ['Ente Público',   p.ente,          false],
+    ['Sigilo',         p.secrecy && p.secrecy !== '0' ? 'Nível ' + p.secrecy : null, false],
+    ['Atualização',    p.atualizacao,   false],
+    ['Score',          p.completeness_score != null ? Math.round(p.completeness_score * 100) + '%' : null, false],
+    ['Fontes',         p.merged ? 'Merged' : p.request, true],
+  ]));
+
+  // Partes
+  const partes = [];
+  for (let i = 1; i <= 10; i++) {
+    const nome = p['parte_' + i];
+    if (!nome) break;
+    partes.push([
+      p['posicao_' + i] || 'parte',
+      nome + (p['documento_' + i] ? ' · ' + p['documento_' + i] : '') +
+        (p['advogado_' + i] ? ' (adv: ' + p['advogado_' + i] + ')' : '')
+    ]);
+  }
+  if (partes.length) {
+    body.appendChild(group('Partes', partes.map(([pos, val]) => [pos, val, false])));
+  }
+
+  // Últimas movimentações
+  if (p.ultimas_5_movimentacoes) {
+    const movGroup = document.createElement('div');
+    movGroup.className = 'modal-group';
+    movGroup.innerHTML = '<div class="modal-group-title">Últimas Movimentações</div>';
+    const movDiv = document.createElement('div');
+    movDiv.className = 'modal-movs';
+    p.ultimas_5_movimentacoes.split(' | ').forEach(m => {
+      const s = document.createElement('span');
+      s.textContent = m;
+      movDiv.appendChild(s);
+    });
+    movGroup.appendChild(movDiv);
+    body.appendChild(movGroup);
+  }
+
+  // Meta
+  const metaRows = [
+    ['Total movs.', p.steps ? String(p.steps) : null, false],
+    ['Dias sem mov.', p.dias_sem_movimentacao != null ? p.dias_sem_movimentacao + ' dias' : null, false],
+    ['Assuntos', p.subjects, false],
+  ];
+  if (p.link_tribunal) {
+    const linkGroup = document.createElement('div');
+    linkGroup.className = 'modal-group';
+    linkGroup.innerHTML = '<div class="modal-group-title">Links</div>' +
+      '<div class="modal-row"><span class="modal-key">Tribunal</span>' +
+      '<a href="' + p.link_tribunal + '" target="_blank" class="modal-link">' + esc(p.link_tribunal) + '</a></div>';
+    body.appendChild(linkGroup);
+  }
+  const metaGrp = group('Meta', metaRows);
+  if (metaGrp.querySelectorAll('.modal-row').length) body.appendChild(metaGrp);
+
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+  currentProcesso = null;
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── Single consultation ──────────────────────────────────
+document.getElementById('btn-consultar').addEventListener('click', async () => {
+  const tipo  = document.getElementById('tipo').value;
+  const valor = document.getElementById('valor').value.trim();
+  if (!valor) return;
+
+  const dispatch   = document.getElementById('dispatch').checked;
+  const completa   = document.getElementById('completa').checked;
+  const providers  = getActiveProviders();
 
   const body = { tipo, valor, dispatch, prioridade: completa ? 'completa' : 'rapida' };
-  if (providerSelect !== 'todos') body.providers = [providerSelect];
+  if (providers.length > 0 && providers.length < 4) body.providers = providers;
 
-  showLoading();
+  setLoading(true);
   try {
-    const res = await fetch('/api/v1/consulta', { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
+    const res  = await fetch('/api/v1/consulta', { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
     const data = await res.json();
-    if (!res.ok) {
-      showResult(data, null, null, true);
+    if (res.ok) {
+      showResult(data.processo, data.tempo_ms, data.dispatch_status, data.providers_consultados);
     } else {
-      showResult(data.processo, data.dispatch_status, data.tempo_ms, false);
+      showError(data.error || data.message || JSON.stringify(data));
     }
     loadHistory();
   } catch (err) {
-    showResult({ error: err.message }, null, null, true);
+    showError(err.message);
   }
-  hideLoading();
+  setLoading(false);
 });
 
-// --- Batch ---
+// ── Batch ────────────────────────────────────────────────
 document.getElementById('btn-lote').addEventListener('click', () => {
-  document.getElementById('batch-area').classList.toggle('hidden');
+  const area = document.getElementById('batch-area');
+  area.style.display = area.style.display === 'none' ? 'block' : 'none';
 });
 
 document.getElementById('btn-enviar-lote').addEventListener('click', async () => {
-  const tipo = document.getElementById('tipo').value;
-  const text = document.getElementById('batch-values').value;
+  const tipo    = document.getElementById('tipo').value;
+  const text    = document.getElementById('batch-values').value;
   const valores = text.split('\\n').map(v => v.trim()).filter(Boolean);
-  if (valores.length === 0) return alert('Cole pelo menos um valor');
+  if (!valores.length) return;
 
-  const dispatch = document.getElementById('dispatch').checked;
-  const completa = document.getElementById('completa').checked;
-  const providerSelect = document.getElementById('provider-select').value;
+  const dispatch  = document.getElementById('dispatch').checked;
+  const completa  = document.getElementById('completa').checked;
+  const providers = getActiveProviders();
 
   const body = { tipo, valores, dispatch, prioridade: completa ? 'completa' : 'rapida' };
-  if (providerSelect !== 'todos') body.providers = [providerSelect];
+  if (providers.length > 0 && providers.length < 4) body.providers = providers;
 
-  showLoading();
+  setLoading(true);
   try {
-    const res = await fetch('/api/v1/consulta/batch', { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
+    const res  = await fetch('/api/v1/consulta/batch', { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
     const data = await res.json();
-    showResult(data, null, null, !res.ok);
+    if (res.ok) showResult(data.resultados, null, null, null);
+    else showError(data.error || JSON.stringify(data));
     loadHistory();
   } catch (err) {
-    showResult({ error: err.message }, null, null, true);
+    showError(err.message);
   }
-  hideLoading();
+  setLoading(false);
 });
 
-// --- UI Helpers ---
-function showLoading() {
-  document.getElementById('loading').classList.remove('hidden');
-  document.getElementById('result-area').classList.add('hidden');
-}
-function hideLoading() {
-  document.getElementById('loading').classList.add('hidden');
-}
-
-function showResult(data, dispatchStatus, tempoMs, isError) {
-  const area = document.getElementById('result-area');
-  area.classList.remove('hidden');
-  document.getElementById('result-json').textContent = JSON.stringify(data, null, 2);
-
-  const badge = document.getElementById('dispatch-badge');
-  if (dispatchStatus) {
-    badge.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700', 'bg-gray-100', 'text-gray-600');
-    if (dispatchStatus === 'enviado') { badge.classList.add('bg-green-100', 'text-green-700'); badge.textContent = 'AppSheet: enviado'; }
-    else if (dispatchStatus === 'falhou') { badge.classList.add('bg-red-100', 'text-red-700'); badge.textContent = 'AppSheet: falhou'; }
-    else { badge.classList.add('bg-gray-100', 'text-gray-600'); badge.textContent = 'AppSheet: desativado'; }
-  } else {
-    badge.classList.add('hidden');
-  }
-
-  const tempo = document.getElementById('tempo-badge');
-  tempo.textContent = tempoMs ? tempoMs + 'ms' : '';
-}
-
-// --- History ---
+// ── History ──────────────────────────────────────────────
 async function loadHistory() {
   try {
-    const res = await fetch('/api/v1/status', { headers: getHeaders() });
+    const res  = await fetch('/api/v1/status', { headers: getHeaders() });
     if (!res.ok) return;
     const data = await res.json();
     const tbody = document.getElementById('history-body');
     const empty = document.getElementById('history-empty');
 
-    if (!data.recent_queries || data.recent_queries.length === 0) {
+    if (!data.recent_queries || !data.recent_queries.length) {
       tbody.innerHTML = '';
-      empty.classList.remove('hidden');
+      empty.style.display = '';
       return;
     }
-    empty.classList.add('hidden');
+    empty.style.display = 'none';
 
     tbody.innerHTML = data.recent_queries.map(q => {
       const time = new Date(q.timestamp).toLocaleTimeString('pt-BR');
-      const statusClass = q.status === 'ok' ? 'text-green-600' : 'text-red-600';
-      const dispatchClass = q.dispatch === 'enviado' ? 'text-green-600' : q.dispatch === 'falhou' ? 'text-red-600' : 'text-gray-400';
-      return '<tr class="hover:bg-gray-50">'
-        + '<td class="px-6 py-3 text-gray-500">' + time + '</td>'
-        + '<td class="px-6 py-3 uppercase font-medium">' + q.tipo + '</td>'
-        + '<td class="px-6 py-3 font-mono text-xs">' + escapeHtml(q.valor) + '</td>'
-        + '<td class="px-6 py-3 font-medium ' + statusClass + '">' + q.status + '</td>'
-        + '<td class="px-6 py-3">' + (q.providers || []).join(', ') + '</td>'
-        + '<td class="px-6 py-3">' + q.tempoMs + 'ms</td>'
-        + '<td class="px-6 py-3 ' + dispatchClass + '">' + q.dispatch + '</td>'
+      const statusCls = q.status === 'ok' ? 'ok' : 'erro';
+      const dispCls   = q.dispatch === 'enviado' ? 'disp-ok' : q.dispatch === 'falhou' ? 'disp-fail' : 'disp-off';
+      const score     = q.completeness_score != null ? Math.round(q.completeness_score * 100) + '%' : '—';
+      return '<tr>'
+        + '<td style="color:var(--text-3)">' + time + '</td>'
+        + '<td style="letter-spacing:.5px;font-size:10px;text-transform:uppercase">' + esc(q.tipo) + '</td>'
+        + '<td class="mono">' + esc(q.valor) + '</td>'
+        + '<td>' + (q.providers || []).join(', ') + '</td>'
+        + '<td class="mono">' + score + '</td>'
+        + '<td class="mono" style="color:var(--text-3)">' + (q.tempoMs || 0) + 'ms</td>'
+        + '<td class="' + dispCls + '">' + (q.dispatch || '—') + '</td>'
         + '</tr>';
     }).join('');
   } catch {}
 }
 
-function escapeHtml(str) {
+// ── Helpers ──────────────────────────────────────────────
+function esc(str) {
   const d = document.createElement('div');
-  d.textContent = str;
+  d.textContent = String(str);
   return d.innerHTML;
 }
 
-// --- Init ---
+function setLoading(on) {
+  document.getElementById('loading').style.display = on ? 'block' : 'none';
+  document.getElementById('btn-consultar').disabled = on;
+  if (!on) return;
+  document.getElementById('result-area').style.display = 'none';
+}
+
+function showError(msg) {
+  const area = document.getElementById('result-area');
+  area.style.display = 'block';
+  document.getElementById('result-cards').innerHTML =
+    '<div class="card" style="border-left:3px solid var(--red);">' +
+    '<div style="color:var(--red);font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Erro</div>' +
+    '<div style="font-family:var(--mono);font-size:12px;color:var(--text-2)">' + esc(msg) + '</div></div>';
+  ['badge-dispatch','badge-tempo','badge-sources'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+}
+
+// ── Init ────────────────────────────────────────────────
 loadProviderStatus();
 loadHistory();
 setInterval(loadProviderStatus, 30000);
@@ -331,251 +933,143 @@ function getDocsPageHtml(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Litix API Documentation</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>GregoSantos. · Litix API Docs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
-    pre { overflow-x: auto; }
-    .endpoint { scroll-margin-top: 80px; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0c0e;--surface:#161618;--border:#2a2a2e;
+      --gold:#c9a84c;--text:#e8e6e2;--text-2:#9b9a9e;--text-3:#5a5a5f;
+      --green:#4caf7a;--serif:'DM Serif Display',Georgia,serif;
+      --sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono','Fira Code',monospace;
+    }
+    html,body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.7;min-height:100vh}
+    ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border)}
+    header{border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:10}
+    .header-inner{display:flex;align-items:center;justify-content:space-between;padding:18px 40px;max-width:860px;margin:0 auto}
+    .brand-name{font-family:var(--serif);font-size:20px}
+    .brand-sub{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text-3);margin-left:14px}
+    a.back{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);text-decoration:none;border-bottom:1px solid transparent;transition:all .15s}
+    a.back:hover{color:var(--gold);border-color:var(--gold)}
+    main{max-width:860px;margin:0 auto;padding:40px 40px 80px}
+    section{margin-bottom:48px}
+    h2{font-family:var(--serif);font-size:22px;margin-bottom:16px;color:var(--text)}
+    h3{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:20px 0 10px}
+    p{color:var(--text-2);margin-bottom:12px;font-size:13px}
+    code{font-family:var(--mono);font-size:12px;background:var(--surface);padding:1px 6px;color:var(--gold)}
+    pre{background:var(--surface);border:1px solid var(--border);padding:18px 20px;overflow-x:auto;font-family:var(--mono);font-size:12px;color:#9feaa5;line-height:1.6;margin-bottom:16px}
+    .endpoint-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .method{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;border:1px solid}
+    .method.post{color:var(--green);border-color:var(--green);background:rgba(76,175,122,.08)}
+    .method.get{color:var(--gold);border-color:var(--gold);background:var(--gold-dim,rgba(201,168,76,.08))}
+    .ep-path{font-family:var(--mono);font-size:14px;color:var(--text)}
+    .ep-tag{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3)}
+    footer{border-top:1px solid var(--border);padding:20px 40px;text-align:center;font-size:11px;color:var(--text-3);letter-spacing:1px}
+    footer em{font-family:var(--serif);font-style:normal;color:var(--text-2)}
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen text-gray-800">
-
-  <header class="bg-white border-b shadow-sm sticky top-0 z-10">
-    <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <a href="/" class="text-2xl font-bold text-indigo-700">Litix</a>
-        <span class="text-sm text-gray-400">API v1 Documentation</span>
-      </div>
+<body>
+<header>
+  <div class="header-inner">
+    <div>
+      <span class="brand-name">GregoSantos.</span>
+      <span class="brand-sub">Litix API v1</span>
     </div>
-  </header>
+    <a href="/" class="back">← Interface</a>
+  </div>
+</header>
+<main>
 
-  <main class="max-w-4xl mx-auto px-6 py-8 space-y-10">
+  <section>
+    <h2>Autenticação</h2>
+    <p>Todas as rotas <code>/api/v1/*</code> requerem header:</p>
+    <pre>Authorization: Bearer {API_ACCESS_KEY}</pre>
+    <p>Configure <code>API_ACCESS_KEY</code> no <code>.env</code>. Se ausente, autenticação é desabilitada.</p>
+  </section>
 
-    <!-- TOC -->
-    <nav class="bg-white rounded-lg border p-6">
-      <h2 class="font-semibold mb-3">Endpoints</h2>
-      <ul class="space-y-1 text-sm">
-        <li><a href="#auth" class="text-indigo-600 hover:underline">Autenticacao</a></li>
-        <li><a href="#post-consulta" class="text-indigo-600 hover:underline">POST /api/v1/consulta</a></li>
-        <li><a href="#post-batch" class="text-indigo-600 hover:underline">POST /api/v1/consulta/batch</a></li>
-        <li><a href="#get-status" class="text-indigo-600 hover:underline">GET /api/v1/status</a></li>
-        <li><a href="#post-cnj" class="text-indigo-600 hover:underline">POST /api/v1/consulta/cnj (legacy)</a></li>
-        <li><a href="#post-documento" class="text-indigo-600 hover:underline">POST /api/v1/consulta/documento (legacy)</a></li>
-        <li><a href="#get-health" class="text-indigo-600 hover:underline">GET /health</a></li>
-      </ul>
-    </nav>
-
-    <!-- Auth -->
-    <section id="auth" class="endpoint bg-white rounded-lg border p-6 space-y-3">
-      <h2 class="text-xl font-bold">Autenticacao</h2>
-      <p class="text-sm text-gray-600">Todas as rotas <code>/api/v1/*</code> requerem autenticacao via header:</p>
-      <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm">Authorization: Bearer {API_ACCESS_KEY}</pre>
-      <p class="text-sm text-gray-600">Configure a variavel <code>API_ACCESS_KEY</code> no <code>.env</code>. Se nao configurada, a autenticacao e desabilitada.</p>
-    </section>
-
-    <!-- POST /api/v1/consulta -->
-    <section id="post-consulta" class="endpoint bg-white rounded-lg border p-6 space-y-4">
-      <div class="flex items-center gap-3">
-        <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">POST</span>
-        <code class="text-sm font-bold">/api/v1/consulta</code>
-      </div>
-      <p class="text-sm text-gray-600">Consulta unificada. Busca por CNJ, CPF, CNPJ, OAB ou Nome. Opcionalmente envia resultado para AppSheet.</p>
-
-      <h4 class="font-semibold text-sm">Request Body</h4>
-      <pre class="bg-gray-900 text-green-400 p-4 rounded text-xs">{
-  "tipo": "cnj" | "cpf" | "cnpj" | "oab" | "nome",
-  "valor": "0804495-71.2018.8.10.0001",
-  "dispatch": true,                          // envia pro AppSheet (default: true)
-  "providers": ["judit", "codilo"],           // opcional, default: todos
-  "prioridade": "rapida" | "completa"         // rapida = primeiro resultado, completa = merge
+  <section>
+    <div class="endpoint-head">
+      <span class="method post">POST</span>
+      <code class="ep-path">/api/v1/consulta</code>
+    </div>
+    <p>Consulta unificada por CNJ, CPF, CNPJ, OAB ou Nome. Retorna AppSheet flat JSON (90 campos).</p>
+    <h3>Request</h3>
+    <pre>{
+  "tipo":      "cnj" | "cpf" | "cnpj" | "oab" | "nome",
+  "valor":     "0804495-71.2018.8.10.0001",
+  "dispatch":  true,
+  "providers": ["judit", "codilo"],       // opcional
+  "prioridade":"rapida" | "completa"      // completa = merge
 }</pre>
-
-      <h4 class="font-semibold text-sm">Response (200)</h4>
-      <pre class="bg-gray-900 text-green-400 p-4 rounded text-xs">{
+    <h3>Response 200</h3>
+    <pre>{
   "success": true,
-  "processo": {
-    "cnj": "0804495-71.2018.8.10.0001",
-    "area": "tributario",
-    "classe": "EXECUCAO FISCAL (1116)",
-    "tribunal_sigla": "TJMA",
-    "tribunal_nome": "...",
-    "polo_ativo_nomes": "ESTADO DO MARANHAO",
-    "polo_passivo_nomes": "...",
-    "total_movimentacoes": 64,
-    "... (32 campos flat)"
-  },
+  "processo": { /* AppSheetProcesso — 90 campos flat */ },
   "dispatch_status": "enviado" | "falhou" | "desativado",
   "providers_consultados": ["codilo"],
   "tempo_ms": 4500
 }</pre>
-
-      <h4 class="font-semibold text-sm">curl</h4>
-      <pre class="bg-gray-800 text-gray-200 p-4 rounded text-xs">curl -X POST http://localhost:3000/api/v1/consulta \\
+    <h3>curl</h3>
+    <pre>curl -X POST http://localhost:3000/api/v1/consulta \\
   -H "Authorization: Bearer YOUR_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"tipo":"cnj","valor":"0804495-71.2018.8.10.0001","dispatch":true}'</pre>
-    </section>
+  </section>
 
-    <!-- POST /api/v1/consulta/batch -->
-    <section id="post-batch" class="endpoint bg-white rounded-lg border p-6 space-y-4">
-      <div class="flex items-center gap-3">
-        <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">POST</span>
-        <code class="text-sm font-bold">/api/v1/consulta/batch</code>
-      </div>
-      <p class="text-sm text-gray-600">Consulta em lote (max 50 valores). Processa sequencialmente.</p>
-
-      <h4 class="font-semibold text-sm">Request Body</h4>
-      <pre class="bg-gray-900 text-green-400 p-4 rounded text-xs">{
-  "tipo": "cnj",
-  "valores": [
-    "0804495-71.2018.8.10.0001",
-    "0001234-56.2024.8.26.0100"
-  ],
+  <section>
+    <div class="endpoint-head">
+      <span class="method post">POST</span>
+      <code class="ep-path">/api/v1/consulta/batch</code>
+    </div>
+    <p>Lote de até 50 valores. Processamento sequencial.</p>
+    <h3>Request</h3>
+    <pre>{
+  "tipo":    "cnj",
+  "valores": ["0804495-71.2018.8.10.0001", "..."],
   "dispatch": true,
-  "providers": ["codilo"],
   "prioridade": "rapida"
 }</pre>
-
-      <h4 class="font-semibold text-sm">Response (200)</h4>
-      <pre class="bg-gray-900 text-green-400 p-4 rounded text-xs">{
-  "total": 2,
-  "sucesso": 1,
-  "falha": 1,
+    <h3>Response 200</h3>
+    <pre>{
+  "total": 2, "sucesso": 1, "falha": 1,
   "resultados": [
-    {
-      "valor": "0804495-71.2018.8.10.0001",
-      "status": "ok",
-      "processo": { "... (32 campos)" },
-      "dispatch_status": "enviado"
-    },
-    {
-      "valor": "0001234-56.2024.8.26.0100",
-      "status": "erro",
-      "erro": "Process not found"
-    }
+    { "valor": "...", "status": "ok", "processo": {}, "dispatch_status": "enviado" },
+    { "valor": "...", "status": "erro", "erro": "Process not found" }
   ]
 }</pre>
+  </section>
 
-      <h4 class="font-semibold text-sm">curl</h4>
-      <pre class="bg-gray-800 text-gray-200 p-4 rounded text-xs">curl -X POST http://localhost:3000/api/v1/consulta/batch \\
-  -H "Authorization: Bearer YOUR_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"tipo":"cnj","valores":["0804495-71.2018.8.10.0001"],"dispatch":true}'</pre>
-    </section>
-
-    <!-- GET /api/v1/status -->
-    <section id="get-status" class="endpoint bg-white rounded-lg border p-6 space-y-4">
-      <div class="flex items-center gap-3">
-        <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">GET</span>
-        <code class="text-sm font-bold">/api/v1/status</code>
-      </div>
-      <p class="text-sm text-gray-600">Status do sistema: providers, uptime, ultimas consultas.</p>
-
-      <h4 class="font-semibold text-sm">Response (200)</h4>
-      <pre class="bg-gray-900 text-green-400 p-4 rounded text-xs">{
+  <section>
+    <div class="endpoint-head">
+      <span class="method get">GET</span>
+      <code class="ep-path">/api/v1/status</code>
+    </div>
+    <p>Status do sistema, providers e últimas consultas.</p>
+    <pre>{
   "status": "online",
   "uptime": "2h 15m",
-  "started_at": "2026-02-19T18:00:00.000Z",
-  "providers": {
-    "judit": { "healthy": true, "circuitState": "closed", "consecutiveFailures": 0 },
-    "codilo": { "healthy": true, "circuitState": "closed", "consecutiveFailures": 0 },
-    "escavador": { "healthy": true, "circuitState": "closed", "consecutiveFailures": 0 },
-    "predictus": { "healthy": true, "circuitState": "closed", "consecutiveFailures": 0 }
-  },
-  "recent_queries": [ { "id": 1, "tipo": "cnj", "valor": "...", "status": "ok", "tempoMs": 4500 } ],
+  "providers": { "judit": { "healthy": true }, "codilo": { "healthy": true } },
+  "recent_queries": [{ "tipo": "cnj", "valor": "...", "tempoMs": 4500 }],
   "total_queries": 42
 }</pre>
+  </section>
 
-      <h4 class="font-semibold text-sm">curl</h4>
-      <pre class="bg-gray-800 text-gray-200 p-4 rounded text-xs">curl http://localhost:3000/api/v1/status \\
-  -H "Authorization: Bearer YOUR_KEY"</pre>
-    </section>
+  <section>
+    <div class="endpoint-head">
+      <span class="method get">GET</span>
+      <code class="ep-path">/health</code>
+      <span class="ep-tag">sem auth</span>
+    </div>
+    <p>Health check de todos os providers.</p>
+    <pre>{ "status": "healthy", "providers": { ... }, "timestamp": "..." }</pre>
+  </section>
 
-    <!-- POST /api/v1/consulta/cnj (legacy) -->
-    <section id="post-cnj" class="endpoint bg-white rounded-lg border p-6 space-y-4">
-      <div class="flex items-center gap-3">
-        <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">POST</span>
-        <code class="text-sm font-bold">/api/v1/consulta/cnj</code>
-        <span class="text-xs text-gray-400">(legacy)</span>
-      </div>
-      <p class="text-sm text-gray-600">Consulta por CNJ retornando ProcessoUnificado completo (nao flat).</p>
-
-      <h4 class="font-semibold text-sm">Request Body</h4>
-      <pre class="bg-gray-900 text-green-400 p-4 rounded text-xs">{
-  "cnj": "0804495-71.2018.8.10.0001",
-  "options": {
-    "strategy": "race",
-    "useCache": true,
-    "timeout": 30000
-  }
-}</pre>
-
-      <h4 class="font-semibold text-sm">Response (200)</h4>
-      <pre class="bg-gray-900 text-green-400 p-4 rounded text-xs">{
-  "success": true,
-  "data": { "cnj": "...", "area": "...", "partes": [...], "movimentacoes": [...] },
-  "meta": { "sources": ["codilo"], "merged": false, "totalDurationMs": 3200 }
-}</pre>
-
-      <h4 class="font-semibold text-sm">curl</h4>
-      <pre class="bg-gray-800 text-gray-200 p-4 rounded text-xs">curl -X POST http://localhost:3000/api/v1/consulta/cnj \\
-  -H "Authorization: Bearer YOUR_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"cnj":"0804495-71.2018.8.10.0001"}'</pre>
-    </section>
-
-    <!-- POST /api/v1/consulta/documento (legacy) -->
-    <section id="post-documento" class="endpoint bg-white rounded-lg border p-6 space-y-4">
-      <div class="flex items-center gap-3">
-        <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">POST</span>
-        <code class="text-sm font-bold">/api/v1/consulta/documento</code>
-        <span class="text-xs text-gray-400">(legacy)</span>
-      </div>
-      <p class="text-sm text-gray-600">Consulta por documento (CPF, CNPJ, OAB ou nome).</p>
-
-      <h4 class="font-semibold text-sm">Request Body</h4>
-      <pre class="bg-gray-900 text-green-400 p-4 rounded text-xs">{
-  "documentType": "cpf",
-  "documentValue": "12345678900"
-}</pre>
-
-      <h4 class="font-semibold text-sm">curl</h4>
-      <pre class="bg-gray-800 text-gray-200 p-4 rounded text-xs">curl -X POST http://localhost:3000/api/v1/consulta/documento \\
-  -H "Authorization: Bearer YOUR_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"documentType":"cpf","documentValue":"12345678900"}'</pre>
-    </section>
-
-    <!-- GET /health -->
-    <section id="get-health" class="endpoint bg-white rounded-lg border p-6 space-y-4">
-      <div class="flex items-center gap-3">
-        <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">GET</span>
-        <code class="text-sm font-bold">/health</code>
-        <span class="text-xs text-gray-400">(sem auth)</span>
-      </div>
-      <p class="text-sm text-gray-600">Health check. Retorna status de todos os providers.</p>
-
-      <h4 class="font-semibold text-sm">Response (200)</h4>
-      <pre class="bg-gray-900 text-green-400 p-4 rounded text-xs">{
-  "status": "healthy",
-  "providers": {
-    "judit": { "healthy": true, "circuitState": "closed" },
-    "codilo": { "healthy": true, "circuitState": "closed" },
-    "escavador": { "healthy": true, "circuitState": "closed" },
-    "predictus": { "healthy": true, "circuitState": "closed" }
-  },
-  "timestamp": "2026-02-19T21:00:00.000Z"
-}</pre>
-
-      <h4 class="font-semibold text-sm">curl</h4>
-      <pre class="bg-gray-800 text-gray-200 p-4 rounded text-xs">curl http://localhost:3000/health</pre>
-    </section>
-
-    <footer class="text-center text-sm text-gray-400 py-8">
-      Litix API v1 &mdash; Consulta Processual Unificada
-    </footer>
-  </main>
-
+</main>
+<footer>
+  &copy; <em>GregoSantos.</em> Advogados &nbsp;&middot;&nbsp; OABPR 3.691
+</footer>
 </body>
 </html>`;
 }
