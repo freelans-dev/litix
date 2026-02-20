@@ -67,6 +67,13 @@ const envSchema = z.object({
 
   // AppSheet
   APPSHEET_WEBHOOK_URL: z.string().default(''),
+
+  // Auto-monitoring
+  MONITOR_ENABLED: z.preprocess((v) => v === 'true' || v === true, z.boolean()).default(false),
+  MONITOR_INTERVAL_HOURS: z.coerce.number().default(6),
+  MONITOR_CPF_INTERVAL_HOURS: z.coerce.number().default(12),
+  MONITOR_TRIBUNAIS: z.string().default('tjsp,tjpr,tjrj,tjmg,tjsc,trf4,trt9'),
+  MONITOR_WEBHOOK_URL: z.string().default(''),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

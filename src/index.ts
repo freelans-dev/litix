@@ -4,7 +4,7 @@ import cors from 'cors';
 import { env } from './config/env.js';
 import { logger } from './utils/logger.js';
 import { requestLogger, authMiddleware, rateLimiter, errorHandler } from './middleware/index.js';
-import { createHealthRouter, createConsultationRouter, createUnifiedConsultationRouter, createMonitoringRouter, createWebhookRouter, createUIRouter } from './controllers/index.js';
+import { createHealthRouter, createConsultationRouter, createUnifiedConsultationRouter, createMonitoringRouter, createWebhookRouter, createUIRouter, createAutoMonitorRouter } from './controllers/index.js';
 import { JuditProvider } from './providers/judit/index.js';
 import { CodiloProvider } from './providers/codilo/index.js';
 import { EscavadorProvider } from './providers/escavador/index.js';
@@ -13,6 +13,9 @@ import { OrchestratorService } from './services/orchestrator.service.js';
 import { ConsultationService } from './services/consultation.service.js';
 import { MonitoringService } from './services/monitoring.service.js';
 import { WebhookDispatcherService } from './services/webhook-dispatcher.service.js';
+import { MonitorService } from './services/monitor.service.js';
+import { CpfMonitorService } from './services/cpf-monitor.service.js';
+import { SchedulerService } from './services/scheduler.service.js';
 
 // Initialize providers
 const juditProvider = new JuditProvider();
@@ -26,6 +29,11 @@ const orchestrator = new OrchestratorService(providers);
 const consultationService = new ConsultationService(orchestrator);
 const monitoringService = new MonitoringService(providers);
 const webhookDispatcher = new WebhookDispatcherService(providers);
+
+// Initialize auto-monitoring services
+const cnjMonitor = new MonitorService();
+const cpfMonitor = new CpfMonitorService();
+const scheduler = new SchedulerService(cnjMonitor, cpfMonitor);
 
 // Log webhook events
 webhookDispatcher.onEvent((event) => {
@@ -65,6 +73,7 @@ app.use(createWebhookRouter(webhookDispatcher));
 app.use('/api/v1', authMiddleware, rateLimiter, createUnifiedConsultationRouter(consultationService, orchestrator));
 app.use('/api/v1', authMiddleware, rateLimiter, createConsultationRouter(consultationService));
 app.use('/api/v1', authMiddleware, rateLimiter, createMonitoringRouter(monitoringService));
+app.use('/api/v1', authMiddleware, rateLimiter, createAutoMonitorRouter(scheduler, cnjMonitor, cpfMonitor));
 
 // Error handler (must be last)
 app.use(errorHandler);
@@ -73,6 +82,7 @@ app.use(errorHandler);
 const port = env.PORT;
 app.listen(port, () => {
   logger.info({ port, env: env.NODE_ENV, strategy: env.ORCHESTRATION_STRATEGY, primaryProvider: env.PRIMARY_PROVIDER }, 'Server started');
+  scheduler.start();
 });
 
 export { app };

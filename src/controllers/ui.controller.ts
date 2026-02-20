@@ -401,6 +401,98 @@ function getMainPageHtml(): string {
     }
     .modal-link:hover { border-color: var(--gold); }
 
+    /* ── Monitoring section ── */
+    .monitor-section { margin-top: 48px; }
+    .monitor-tabs {
+      display: flex; gap: 0; border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .mtab {
+      font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+      font-weight: 500; padding: 10px 20px; cursor: pointer;
+      background: none; border: none; color: var(--text-3);
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: all .18s;
+    }
+    .mtab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .mtab:hover:not(.active) { color: var(--text-2); }
+    .mtab-panel { display: none; }
+    .mtab-panel.active { display: block; }
+    .monitor-status-bar {
+      display: flex; gap: 24px; flex-wrap: wrap;
+      padding: 14px 20px; background: var(--surface);
+      border: 1px solid var(--border); margin-bottom: 20px;
+    }
+    .mstat {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .mstat-label {
+      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .mstat-val { font-size: 13px; color: var(--text-2); }
+    .mstat-val.gold { color: var(--gold); }
+    .monitor-add-row {
+      display: flex; gap: 8px; margin-bottom: 16px;
+    }
+    .monitor-add-row input {
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--mono); font-size: 12px;
+      padding: 9px 14px; outline: none; caret-color: var(--gold);
+    }
+    .monitor-add-row input::placeholder { color: var(--text-3); }
+    .monitor-add-row input:focus { border-color: var(--gold); }
+    .btn-add {
+      font-family: var(--sans); font-size: 10px; font-weight: 600;
+      letter-spacing: 2px; text-transform: uppercase;
+      padding: 9px 18px; cursor: pointer;
+      background: var(--gold-dim); color: var(--gold);
+      border: 1px solid var(--gold); transition: background .18s;
+      white-space: nowrap;
+    }
+    .btn-add:hover { background: var(--gold-hover); }
+    .monitor-list { margin-bottom: 24px; }
+    .mentry {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; background: var(--surface);
+      border: 1px solid var(--border); border-top: none;
+      gap: 12px;
+    }
+    .mentry:first-child { border-top: 1px solid var(--border); }
+    .mentry-cnj { font-family: var(--mono); font-size: 12px; color: var(--gold); }
+    .mentry-meta { font-size: 11px; color: var(--text-3); flex: 1; }
+    .mentry-status { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+    .mentry-status.ok { color: var(--green); }
+    .mentry-status.alert { color: var(--amber); }
+    .mentry-status.pending { color: var(--text-3); }
+    .btn-remove {
+      background: none; border: none; color: var(--text-3);
+      font-size: 16px; cursor: pointer; padding: 2px 6px;
+      line-height: 1; transition: color .15s;
+    }
+    .btn-remove:hover { color: var(--red); }
+    .mentry-empty {
+      padding: 32px; text-align: center;
+      font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--text-3);
+      background: var(--surface); border: 1px solid var(--border);
+    }
+    .alert-item {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 12px 16px; background: var(--surface);
+      border: 1px solid var(--border); border-top: none;
+    }
+    .alert-item:first-child { border-top: 1px solid var(--border); }
+    .alert-dot {
+      width: 6px; height: 6px; flex-shrink: 0; margin-top: 5px;
+    }
+    .alert-dot.nova_movimentacao { background: var(--amber); }
+    .alert-dot.novo_processo { background: var(--green); }
+    .alert-time { font-size: 10px; color: var(--text-3); white-space: nowrap; }
+    .alert-body { flex: 1; }
+    .alert-cnj { font-family: var(--mono); font-size: 11px; color: var(--gold); }
+    .alert-desc { font-size: 12px; color: var(--text-2); }
+
     /* ── Footer ── */
     footer {
       border-top: 1px solid var(--border);
@@ -533,6 +625,87 @@ function getMainPageHtml(): string {
         <tbody id="history-body"></tbody>
       </table>
       <div id="history-empty" class="history-empty">Nenhuma consulta ainda.</div>
+    </div>
+  </div>
+
+  <!-- ══ Monitoring ══════════════════════════════════════════ -->
+  <div class="monitor-section">
+    <div class="history-header" style="margin-bottom:16px">
+      <div class="section-label" style="margin:0">Monitoramento Automático</div>
+      <button id="btn-run-now" class="btn-secondary" style="font-size:10px;padding:6px 14px;">
+        ▶ Forçar verificação
+      </button>
+    </div>
+
+    <!-- Status bar -->
+    <div class="monitor-status-bar" id="monitor-status-bar">
+      <div class="mstat">
+        <span class="mstat-label">CNJ monitor</span>
+        <span class="mstat-val" id="mstat-cnj-last">—</span>
+      </div>
+      <div class="mstat">
+        <span class="mstat-label">Próxima verificação</span>
+        <span class="mstat-val" id="mstat-cnj-next">—</span>
+      </div>
+      <div class="mstat">
+        <span class="mstat-label">CNJs monitorados</span>
+        <span class="mstat-val gold" id="mstat-cnj-total">0</span>
+      </div>
+      <div class="mstat">
+        <span class="mstat-label">Alertas últ. ciclo</span>
+        <span class="mstat-val" id="mstat-cnj-alertas">0</span>
+      </div>
+      <div class="mstat">
+        <span class="mstat-label">Docs monitorados</span>
+        <span class="mstat-val gold" id="mstat-doc-total">0</span>
+      </div>
+      <div class="mstat">
+        <span class="mstat-label">Novos últ. ciclo</span>
+        <span class="mstat-val" id="mstat-doc-novos">0</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="monitor-tabs">
+      <button class="mtab active" onclick="switchMTab('cnj')">CNJs</button>
+      <button class="mtab" onclick="switchMTab('docs')">CPF / CNPJ</button>
+      <button class="mtab" onclick="switchMTab('alertas')">Alertas</button>
+    </div>
+
+    <!-- Tab: CNJs -->
+    <div class="mtab-panel active" id="mtab-cnj">
+      <div class="monitor-add-row">
+        <input id="m-cnj-input" type="text" placeholder="CNJ: 0000000-00.0000.0.00.0000" />
+        <input id="m-cnj-cliente" type="text" placeholder="Cliente" style="max-width:180px" />
+        <button class="btn-add" onclick="addMonitorCnj()">+ Adicionar</button>
+      </div>
+      <div class="monitor-list" id="monitor-cnj-list">
+        <div class="mentry-empty" id="cnj-list-empty">Nenhum CNJ monitorado.</div>
+      </div>
+    </div>
+
+    <!-- Tab: Docs -->
+    <div class="mtab-panel" id="mtab-docs">
+      <div class="monitor-add-row">
+        <select id="m-doc-tipo" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);padding:9px 12px;font-size:12px;outline:none;cursor:pointer;appearance:none;min-width:80px;">
+          <option value="cpf">CPF</option>
+          <option value="cnpj">CNPJ</option>
+        </select>
+        <input id="m-doc-valor" type="text" placeholder="000.000.000-00" />
+        <input id="m-doc-nome" type="text" placeholder="Nome" style="max-width:160px" />
+        <input id="m-doc-cliente" type="text" placeholder="Cliente" style="max-width:160px" />
+        <button class="btn-add" onclick="addMonitorDoc()">+ Adicionar</button>
+      </div>
+      <div class="monitor-list" id="monitor-doc-list">
+        <div class="mentry-empty" id="doc-list-empty">Nenhum documento monitorado.</div>
+      </div>
+    </div>
+
+    <!-- Tab: Alertas -->
+    <div class="mtab-panel" id="mtab-alertas">
+      <div id="monitor-alert-list">
+        <div class="mentry-empty" id="alert-list-empty">Nenhum alerta registrado.</div>
+      </div>
     </div>
   </div>
 
@@ -918,10 +1091,189 @@ function showError(msg) {
   });
 }
 
+// ── Monitoring ───────────────────────────────────────────
+function switchMTab(id) {
+  document.querySelectorAll('.mtab').forEach((t, i) => {
+    const ids = ['cnj','docs','alertas'];
+    t.classList.toggle('active', ids[i] === id);
+  });
+  document.querySelectorAll('.mtab-panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'mtab-' + id);
+  });
+}
+
+async function loadMonitorStatus() {
+  try {
+    const res = await fetch('/api/v1/monitor/status', { headers: getHeaders() });
+    if (!res.ok) return;
+    const { data } = await res.json();
+    const fmt = s => s ? new Date(s).toLocaleString('pt-BR') : '—';
+    document.getElementById('mstat-cnj-last').textContent    = fmt(data.cnj_monitor.last_run);
+    document.getElementById('mstat-cnj-next').textContent    = fmt(data.cnj_monitor.next_run);
+    document.getElementById('mstat-cnj-total').textContent   = data.cnj_monitor.total_monitorados;
+    document.getElementById('mstat-cnj-alertas').textContent = data.cnj_monitor.alertas_ultimo_ciclo;
+    document.getElementById('mstat-doc-total').textContent   = data.cpf_monitor.total_monitorados;
+    document.getElementById('mstat-doc-novos').textContent   = data.cpf_monitor.novos_ultimo_ciclo;
+  } catch {}
+}
+
+async function loadMonitorCnjs() {
+  try {
+    const res = await fetch('/api/v1/monitor/cnj', { headers: getHeaders() });
+    if (!res.ok) return;
+    const { data } = await res.json();
+    const list = document.getElementById('monitor-cnj-list');
+    const empty = document.getElementById('cnj-list-empty');
+    if (!data || !data.length) { empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    list.innerHTML = data.map(e =>
+      '<div class="mentry">' +
+        '<span class="mentry-cnj">' + esc(e.cnj) + '</span>' +
+        '<span class="mentry-meta">' + esc(e.cliente) +
+          (e.ultima_verificacao ? ' · ' + new Date(e.ultima_verificacao).toLocaleString('pt-BR') : '') +
+          (e.total_movs_conhecido ? ' · ' + e.total_movs_conhecido + ' movs' : '') +
+        '</span>' +
+        '<span class="mentry-status ' + (e.ultimo_hash_movs ? 'ok' : 'pending') + '">' +
+          (e.ultimo_hash_movs ? 'ativo' : 'aguardando') + '</span>' +
+        '<button class="btn-remove" onclick="removeCnj(' + JSON.stringify(e.cnj) + ')" title="Remover">&times;</button>' +
+      '</div>'
+    ).join('');
+  } catch {}
+}
+
+async function loadMonitorDocs() {
+  try {
+    const res = await fetch('/api/v1/monitor/documento', { headers: getHeaders() });
+    if (!res.ok) return;
+    const { data } = await res.json();
+    const list = document.getElementById('monitor-doc-list');
+    const empty = document.getElementById('doc-list-empty');
+    if (!data || !data.length) { empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    list.innerHTML = data.map(e =>
+      '<div class="mentry">' +
+        '<span class="mentry-cnj">' + esc(e.tipo.toUpperCase() + ' ' + e.valor) + '</span>' +
+        '<span class="mentry-meta">' + esc(e.nome) + ' · ' + esc(e.cliente) +
+          ' · ' + e.cnjs_conhecidos.length + ' processos' + '</span>' +
+        '<button class="btn-remove" onclick="removeDoc(' + JSON.stringify(e.valor) + ')" title="Remover">&times;</button>' +
+      '</div>'
+    ).join('');
+  } catch {}
+}
+
+async function loadMonitorAlertas() {
+  try {
+    const res = await fetch('/api/v1/monitor/alertas', { headers: getHeaders() });
+    if (!res.ok) return;
+    const { data } = await res.json();
+    const list = document.getElementById('monitor-alert-list');
+    const empty = document.getElementById('alert-list-empty');
+    if (!data || !data.length) { empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    list.innerHTML = data.map(a =>
+      '<div class="alert-item">' +
+        '<span class="alert-dot ' + a.tipo + '"></span>' +
+        '<div class="alert-body">' +
+          '<div class="alert-cnj">' + esc(a.cnj) + ' · ' + esc(a.cliente) + '</div>' +
+          '<div class="alert-desc">' + esc(a.descricao) + '</div>' +
+        '</div>' +
+        '<span class="alert-time">' + new Date(a.timestamp).toLocaleString('pt-BR') + '</span>' +
+      '</div>'
+    ).join('');
+  } catch {}
+}
+
+async function addMonitorCnj() {
+  const cnj     = document.getElementById('m-cnj-input').value.trim();
+  const cliente = document.getElementById('m-cnj-cliente').value.trim();
+  if (!cnj || !cliente) return;
+  try {
+    const res = await fetch('/api/v1/monitor/cnj', {
+      method: 'POST', headers: getHeaders(),
+      body: JSON.stringify({ cnj, cliente }),
+    });
+    if (res.ok) {
+      document.getElementById('m-cnj-input').value = '';
+      document.getElementById('m-cnj-cliente').value = '';
+      loadMonitorCnjs();
+      loadMonitorStatus();
+    } else {
+      const d = await res.json();
+      alert(d.error || 'Erro ao adicionar CNJ');
+    }
+  } catch(e) { alert(e.message); }
+}
+
+async function removeCnj(cnj) {
+  if (!confirm('Remover ' + cnj + ' do monitoramento?')) return;
+  try {
+    await fetch('/api/v1/monitor/cnj/' + encodeURIComponent(cnj), {
+      method: 'DELETE', headers: getHeaders(),
+    });
+    loadMonitorCnjs();
+    loadMonitorStatus();
+  } catch {}
+}
+
+async function addMonitorDoc() {
+  const tipo    = document.getElementById('m-doc-tipo').value;
+  const valor   = document.getElementById('m-doc-valor').value.trim();
+  const nome    = document.getElementById('m-doc-nome').value.trim();
+  const cliente = document.getElementById('m-doc-cliente').value.trim();
+  if (!valor || !nome || !cliente) return;
+  try {
+    const res = await fetch('/api/v1/monitor/documento', {
+      method: 'POST', headers: getHeaders(),
+      body: JSON.stringify({ tipo, valor, nome, cliente }),
+    });
+    if (res.ok) {
+      document.getElementById('m-doc-valor').value = '';
+      document.getElementById('m-doc-nome').value = '';
+      document.getElementById('m-doc-cliente').value = '';
+      loadMonitorDocs();
+      loadMonitorStatus();
+    } else {
+      const d = await res.json();
+      alert(d.error || 'Erro ao adicionar documento');
+    }
+  } catch(e) { alert(e.message); }
+}
+
+async function removeDoc(valor) {
+  if (!confirm('Remover ' + valor + ' do monitoramento?')) return;
+  try {
+    await fetch('/api/v1/monitor/documento/' + encodeURIComponent(valor), {
+      method: 'DELETE', headers: getHeaders(),
+    });
+    loadMonitorDocs();
+    loadMonitorStatus();
+  } catch {}
+}
+
+document.getElementById('btn-run-now').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-run-now');
+  btn.disabled = true;
+  btn.textContent = '⏳ Executando...';
+  try {
+    await fetch('/api/v1/monitor/run', { method: 'POST', headers: getHeaders() });
+    await Promise.all([loadMonitorStatus(), loadMonitorCnjs(), loadMonitorAlertas()]);
+  } catch {}
+  btn.disabled = false;
+  btn.textContent = '▶ Forçar verificação';
+});
+
+// Also expose GET endpoints for listing (auto-monitor controller)
+// We monkey-patch fetch to add list endpoints reading from monitor routes
+
 // ── Init ────────────────────────────────────────────────
 loadProviderStatus();
 loadHistory();
+loadMonitorStatus();
+loadMonitorCnjs();
+loadMonitorDocs();
+loadMonitorAlertas();
 setInterval(loadProviderStatus, 30000);
+setInterval(() => { loadMonitorStatus(); loadMonitorAlertas(); }, 60000);
 </script>
 </body>
 </html>`;

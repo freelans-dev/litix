@@ -4,3 +4,4 @@ export { createUnifiedConsultationRouter } from './unified-consultation.controll
 export { createMonitoringRouter } from './monitoring.controller.js';
 export { createWebhookRouter } from './webhook.controller.js';
 export { createUIRouter } from './ui.controller.js';
+export { createAutoMonitorRouter } from './auto-monitor.controller.js';
