@@ -95,7 +95,7 @@ export class DataJudProvider implements ILegalDataProvider {
     const start = Date.now();
     try {
       const response = await this.client.search(alias, {
-        query: { match: { numeroProcesso: formatted } },
+        query: { term: { numeroProcesso: requestId } },
         size: 1,
       });
 
