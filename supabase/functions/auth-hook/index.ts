@@ -1,61 +1,44 @@
 /**
- * LITIX — Supabase Auth Hook (Edge Function)
- * Story: LITIX-1.2
+ * Litix Auth Hook — Supabase Edge Function
  *
- * Injects tenant_id, role, member_id, plan into JWT custom claims.
+ * Injeta tenant_id, role e member_id no JWT após login.
+ * Configurar em: Supabase Dashboard → Auth → Hooks → Custom Access Token
+ *
  * Deploy: supabase functions deploy auth-hook --no-verify-jwt
- * Configure in: Supabase Dashboard > Authentication > Hooks > Custom Access Token
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-interface AuthHookPayload {
-  event: string
-  session: {
-    user: {
-      id: string
-      email: string
-    }
-  }
-}
-
 Deno.serve(async (req: Request) => {
-  const payload = (await req.json()) as AuthHookPayload
-  const userId = payload.session.user.id
+  const payload = await req.json()
+  const { user_id } = payload
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  // Fetch member + tenant + subscription
-  const { data: member } = await supabase
+  const { data: membership, error } = await supabase
     .from('tenant_members')
-    .select('id, role, tenant_id, tenants(plan)')
-    .eq('user_id', userId)
+    .select('tenant_id, role, id')
+    .eq('user_id', user_id)
     .eq('is_active', true)
     .single()
 
-  if (!member) {
-    // User exists but has no tenant yet (e.g., mid-signup)
-    return Response.json({ session: payload.session })
+  if (error || !membership) {
+    return new Response(
+      JSON.stringify({ error: 'No active membership found' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    )
   }
 
-  const tenant = member.tenants as { plan: string } | null
-
-  return Response.json({
-    session: {
-      ...payload.session,
-      user: {
-        ...payload.session.user,
-        app_metadata: {
-          ...payload.session.user,
-          tenant_id: member.tenant_id,
-          member_id: member.id,
-          role: member.role,
-          plan: tenant?.plan ?? 'free',
-        },
+  return new Response(
+    JSON.stringify({
+      app_metadata: {
+        tenant_id: membership.tenant_id,
+        role:      membership.role,
+        member_id: membership.id,
       },
-    },
-  })
+    }),
+    { headers: { 'Content-Type': 'application/json' } }
+  )
 })
