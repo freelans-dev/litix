@@ -30,6 +30,8 @@ export interface JuditCreateRequestResponse {
   };
   origin: string;
   origin_id: string;
+  user_id: string;
+  company_id: string;
   tags: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -44,14 +46,17 @@ export interface JuditRequestStatus {
   updated_at: string;
 }
 
-// ── Responses ──
+// ── Responses (actual API structure) ──
+// Endpoint: GET /responses?request_id=...&response_type=lawsuit
+// Returns: { page_data: JuditResponseItem[] }
 
 export interface JuditResponsesPage {
-  page: number;
+  request_status: string;
+  page: string | number;
   page_count: number;
   all_pages_count: number;
   all_count: number;
-  data: JuditResponseItem[];
+  page_data: JuditResponseItem[];
 }
 
 export interface JuditResponseItem {
@@ -61,46 +66,57 @@ export interface JuditResponseItem {
   user_id: string;
   origin: string;
   origin_id: string;
-  cached_response: boolean;
+  response_data: JuditLawsuitData;
   tags: Record<string, unknown>;
   created_at: string;
-  updated_at: string;
-  lawsuit?: JuditLawsuit;
+  request_created_at: string;
 }
 
-// ── Lawsuit ──
+// ── Lawsuit data (inside response_data) ──
 
-export interface JuditLawsuit {
-  response_data: {
-    area?: string;
-    name?: string;
-    distribution_date?: string;
-    instance?: string;
-    courts?: string;
-    secrecy_level?: number;
-    subjects?: JuditSubject[];
-    classifications?: string[];
-    judge?: string;
-    code?: string;
-    justice_description?: string;
-    county?: string;
-    tribunal_acronym?: string;
-    city?: string;
-    state?: string;
-    situation?: string;
-    phase?: string;
-    status?: string;
-    amount?: number;
-  };
+export interface JuditLawsuitData {
+  code?: string;
+  justice?: string;
+  tribunal?: string;
+  tribunal_acronym?: string;
+  instance?: number;
+  distribution_date?: string;
+  judge?: string;
+  secrecy_level?: number;
+  subjects?: JuditSubject[];
+  classifications?: Array<{ code?: string; name?: string }>;
+  courts?: Array<{ code?: string; name?: string }>;
   parties?: JuditParty[];
   steps?: JuditStep[];
   attachments?: JuditAttachment[];
-  related_lawsuits?: Array<{ code?: string; instance?: string }>;
+  related_lawsuits?: Array<{ code?: string; instance?: number }>;
+  last_step?: JuditLastStep;
+  county?: string;
+  amount?: number;
+  state?: string;
+  city?: string;
+  justice_description?: string;
+  area?: string;
+  phase?: string;
+  status?: string;
+  name?: string;
+  created_at?: string;
+  updated_at?: string;
+  free_justice?: boolean;
+  metadata?: Record<string, unknown>;
+  crawler?: {
+    source_name?: string;
+    crawl_id?: string;
+    weight?: number;
+    updated_at?: string;
+  };
+  tags?: Record<string, unknown>;
 }
 
 export interface JuditSubject {
   code?: string;
-  description?: string;
+  name?: string;         // API uses 'name', not 'description'
+  description?: string;  // kept for compatibility
   main?: boolean;
 }
 
@@ -109,8 +125,10 @@ export interface JuditParty {
   main_document?: string;
   side?: string;
   person_type?: string;
+  entity_type?: string;
   documents?: Array<{ document_type?: string; document?: string }>;
   lawyers?: JuditLawyer[];
+  tags?: Record<string, unknown>;
 }
 
 export interface JuditLawyer {
@@ -119,18 +137,29 @@ export interface JuditLawyer {
 }
 
 export interface JuditStep {
+  step_id?: string;
   step_date: string;
   step_type?: string;
   content?: string;
   private?: boolean;
-  step_id?: string;
+  lawsuit_cnj?: string;
+  lawsuit_instance?: number;
+  tags?: Record<string, unknown>;
+}
+
+export interface JuditLastStep extends JuditStep {
+  steps_count?: number;
 }
 
 export interface JuditAttachment {
+  attachment_id?: string;
   step_id?: string;
   attachment_date: string;
   attachment_name: string;
   extension?: string;
+  status?: string;
+  user_data?: unknown;
+  tags?: Record<string, unknown>;
 }
 
 // ── Tracking ──
@@ -162,7 +191,7 @@ export interface JuditWebhookPayload {
   event_type: string;
   reference_type: 'request' | 'tracking';
   reference_id: string;
-  payload: JuditLawsuit | JuditApplicationInfo | JuditApplicationError;
+  payload: JuditLawsuitData | JuditApplicationInfo | JuditApplicationError;
 }
 
 export interface JuditApplicationInfo {

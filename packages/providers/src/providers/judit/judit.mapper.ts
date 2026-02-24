@@ -3,17 +3,15 @@ import type { Parte, Advogado } from '../../models/parte.js';
 import type { Movimentacao } from '../../models/movimentacao.js';
 import type { Anexo } from '../../models/anexo.js';
 import type { AreaJuridica, StatusProcesso, FaseProcesso, NivelSigilo, TipoParte } from '../../models/enums.js';
-import type { JuditLawsuit, JuditParty, JuditStep, JuditAttachment, JuditWebhookPayload } from './judit.types.js';
+import type { JuditLawsuitData, JuditParty, JuditStep, JuditAttachment, JuditWebhookPayload } from './judit.types.js';
 
-export function mapJuditToUnificado(lawsuit: JuditLawsuit, requestId: string): ProcessoUnificado {
-  const rd = lawsuit.response_data;
-
+export function mapJuditToUnificado(rd: JuditLawsuitData, requestId: string): ProcessoUnificado {
   return {
     cnj: rd.code ?? '',
     area: mapArea(rd.area),
     nome: rd.name,
     dataDistribuicao: rd.distribution_date ? new Date(rd.distribution_date) : undefined,
-    instancia: rd.instance ? parseInt(rd.instance, 10) || undefined : undefined,
+    instancia: rd.instance ?? undefined,
     tribunal: buildTribunal(rd),
     assuntos: rd.subjects?.map(mapAssunto),
     juiz: rd.judge,
@@ -21,9 +19,9 @@ export function mapJuditToUnificado(lawsuit: JuditLawsuit, requestId: string): P
     fase: mapFase(rd.phase),
     nivelSigilo: mapSigilo(rd.secrecy_level),
     valor: rd.amount,
-    partes: lawsuit.parties?.map(mapParty),
-    movimentacoes: lawsuit.steps?.map(mapStep),
-    anexos: lawsuit.attachments?.map(mapAttachment),
+    partes: rd.parties?.map(mapParty),
+    movimentacoes: rd.steps?.map(mapStep),
+    anexos: rd.attachments?.map(mapAttachment),
     origem: {
       provider: 'judit',
       requestId,
@@ -33,24 +31,24 @@ export function mapJuditToUnificado(lawsuit: JuditLawsuit, requestId: string): P
 }
 
 export function mapJuditWebhookToUnificado(payload: JuditWebhookPayload): ProcessoUnificado | null {
-  if (!('response_data' in payload.payload)) return null;
-  return mapJuditToUnificado(payload.payload as JuditLawsuit, payload.reference_id);
+  if (!('code' in payload.payload)) return null;
+  return mapJuditToUnificado(payload.payload as JuditLawsuitData, payload.reference_id);
 }
 
-function buildTribunal(rd: JuditLawsuit['response_data']): Tribunal | undefined {
+function buildTribunal(rd: JuditLawsuitData): Tribunal | undefined {
   if (!rd.tribunal_acronym) return undefined;
   return {
     sigla: rd.tribunal_acronym,
     nome: rd.justice_description,
-    instancia: rd.instance ? parseInt(rd.instance, 10) || undefined : undefined,
+    instancia: rd.instance,
     comarca: rd.county ?? rd.city,
   };
 }
 
-function mapAssunto(s: { code?: string; description?: string; main?: boolean }): Assunto {
+function mapAssunto(s: { code?: string; name?: string; description?: string; main?: boolean }): Assunto {
   return {
     codigo: s.code,
-    descricao: s.description ?? '',
+    descricao: s.name ?? s.description ?? '',
     principal: s.main ?? false,
   };
 }

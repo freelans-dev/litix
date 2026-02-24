@@ -93,10 +93,10 @@ export class JuditProvider implements ILegalDataProvider {
     if (status.status === 'completed') {
       const responsesPage = await this.client.getResponses(requestId);
 
-      if (responsesPage.data.length > 0) {
-        const firstResponse = responsesPage.data[0];
-        if (firstResponse?.lawsuit) {
-          return mapJuditToUnificado(firstResponse.lawsuit, requestId);
+      if (responsesPage.page_data.length > 0) {
+        const firstResponse = responsesPage.page_data[0];
+        if (firstResponse?.response_data) {
+          return mapJuditToUnificado(firstResponse.response_data, requestId);
         }
       }
       return null;
