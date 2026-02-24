@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { getTenantContext } from '@/lib/auth'
 import { OABImportForm } from '@/features/cases/components/oab-import-form'
 import { Badge } from '@/components/ui/badge'
@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function ProfilePage() {
   const ctx = await getTenantContext()
-  const supabase = await createClient()
+  const supabase = createServiceClient()
 
   const { data: profile } = await supabase
     .from('profiles')

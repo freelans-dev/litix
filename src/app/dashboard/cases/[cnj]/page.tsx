@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { getTenantContext } from '@/lib/auth'
 import { formatCNJ } from '@/lib/crypto'
 import { Badge } from '@/components/ui/badge'
@@ -35,7 +35,7 @@ export default async function CaseDetailPage(props: {
 }) {
   const { cnj } = await props.params
   const ctx = await getTenantContext()
-  const supabase = await createClient()
+  const supabase = createServiceClient()
 
   // Load case
   const { data: caseData } = await supabase

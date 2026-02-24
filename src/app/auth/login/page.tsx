@@ -4,11 +4,13 @@ import { LoginForm } from '@/features/auth/components/login-form'
 
 export const metadata: Metadata = { title: 'Entrar' }
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: { redirectedFrom?: string; error?: string }
+  searchParams: Promise<{ redirectedFrom?: string; error?: string }>
 }) {
+  const params = await searchParams
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-6">
@@ -26,13 +28,13 @@ export default function LoginPage({
         </div>
 
         {/* Error from redirect */}
-        {searchParams.error && (
+        {params.error && (
           <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
             Sessão expirada. Faça login novamente.
           </div>
         )}
 
-        <LoginForm redirectTo={searchParams.redirectedFrom} />
+        <LoginForm redirectTo={params.redirectedFrom} />
 
         <p className="text-center text-sm text-muted-foreground">
           Não tem conta?{' '}

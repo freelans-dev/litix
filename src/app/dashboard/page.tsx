@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { getTenantContext } from '@/lib/auth'
 import { FileText, Bell, Activity, Clock } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Início' }
 
 async function getStats(tenantId: string) {
-  const supabase = await createClient()
+  const supabase = createServiceClient()
 
   const [casesResult, alertsResult, unreadResult] = await Promise.all([
     supabase.from('monitored_cases').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),

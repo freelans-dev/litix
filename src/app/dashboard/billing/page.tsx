@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { getTenantContext } from '@/lib/auth'
 import { ManageSubscriptionButton } from '@/features/billing/components/manage-subscription-button'
 import { UpgradeButton } from '@/features/billing/components/upgrade-button'
@@ -46,7 +46,7 @@ const NEXT_PLAN_PRICE: Record<string, string> = {
 
 export default async function BillingPage() {
   const ctx = await getTenantContext()
-  const supabase = await createClient()
+  const supabase = createServiceClient()
 
   const { data: subscription } = await supabase
     .from('subscriptions')
