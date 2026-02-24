@@ -1,10 +1,19 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
-const PUBLIC_ROUTES = ['/', '/pricing', '/auth/login', '/auth/signup', '/auth/callback']
+const PUBLIC_ROUTES = [
+  '/',
+  '/pricing',
+  '/auth/login',
+  '/auth/signup',
+  '/auth/callback',
+  '/auth/verify-email',
+  '/auth/reset-password',
+  '/auth/new-password',
+]
 const AUTH_ROUTES = ['/auth/login', '/auth/signup']
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Allow public routes without auth check
