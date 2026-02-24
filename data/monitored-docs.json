@@ -1,0 +1,31 @@
+{
+  "documentos": [
+    {
+      "tipo": "cnpj",
+      "valor": "60.283.912/0001-40",
+      "nome": "NorthFI Ltda",
+      "cliente": "João Marin",
+      "cnjs_conhecidos": [],
+      "ultima_verificacao": "2026-02-24T14:24:57.906Z",
+      "ativo": true
+    },
+    {
+      "tipo": "cnpj",
+      "valor": "52.036.869/0001-90",
+      "nome": "Reche",
+      "cliente": "Gabriel Reche",
+      "cnjs_conhecidos": [],
+      "ultima_verificacao": "2026-02-24T14:26:14.696Z",
+      "ativo": true
+    },
+    {
+      "tipo": "cpf",
+      "valor": "07082471998",
+      "nome": "João Marin",
+      "cliente": "Cliente 1",
+      "cnjs_conhecidos": [],
+      "ultima_verificacao": "2026-02-24T14:27:31.210Z",
+      "ativo": true
+    }
+  ]
+}

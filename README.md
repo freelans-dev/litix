@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Litix
 
-## Getting Started
+Plataforma SaaS de monitoramento e consulta processual multi-provider para escritórios de advocacia no Brasil.
 
-First, run the development server:
+## Estrutura do Repositório
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+litix/
+├── src/                        # Next.js 15 App Router (SaaS principal)
+│   ├── app/                    # Páginas, API routes, layouts
+│   ├── components/             # Componentes UI (shadcn/ui)
+│   ├── features/               # Módulos de feature (cases, billing, webhooks, team)
+│   ├── lib/                    # Supabase, Stripe, utils
+│   └── types/                  # TypeScript types (database.ts)
+├── packages/
+│   └── providers/              # Engine multi-provider de consulta processual
+│       └── src/
+│           ├── providers/      # DataJud, Codilo, Judit, Escavador, Predictus
+│           ├── services/       # Orchestrator, monitoring, merge, webhook-dispatcher
+│           ├── transformers/   # AppSheet transformer (90 campos)
+│           ├── errors/         # Classes de erro tipadas
+│           └── config/         # Configuração de providers
+├── scripts/
+│   ├── BuscaProcesso.gs        # Google Apps Script — busca processual
+│   └── TestarTokenCodilo.gs    # Google Apps Script — teste de autenticação Codilo
+├── docs/
+│   ├── litix-prd.md            # Product Requirements Document
+│   ├── litix-architecture.md   # Arquitetura técnica (18 tabelas, 40 endpoints, 8 ADRs)
+│   ├── litix-ux-spec.md        # UX Specification
+│   ├── market-research.md      # Pesquisa de mercado
+│   ├── competitive-analysis.md # Análise competitiva
+│   ├── architecture-recommendations.md
+│   └── stories/                # User stories (LITIX-1.x a LITIX-12.x)
+└── data/                       # Dados de referência (development/testing)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Stack Técnica
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Camada | Tecnologia |
+|--------|-----------|
+| Frontend | Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS 4 |
+| UI Components | shadcn/ui |
+| Auth | Supabase Auth + Edge Function Hook |
+| Database | Supabase PostgreSQL + RLS multi-tenant |
+| Background Jobs | Trigger.dev + Supabase pg_cron |
+| Caching | Vercel KV (Upstash Redis) |
+| Billing | Stripe |
+| Deploy | Vercel |
+| Providers | DataJud, Codilo, Judit, Escavador, Predictus |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Providers de Consulta
 
-## Learn More
+O pacote `packages/providers/` contém o engine de consulta multi-provider:
 
-To learn more about Next.js, take a look at the following resources:
+- **DataJud** — CNJ (gratuito, cobre 92 tribunais)
+- **Codilo** — Consulta detalhada + monitoramento
+- **Judit** — Consulta paralela com polling
+- **Escavador** — Busca por CPF/CNPJ/OAB
+- **Predictus** — Análise preditiva + histórico
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Planos
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Plano | Processos | Preço |
+|-------|-----------|-------|
+| Free | 10 | R$ 0 |
+| Solo | 200 | R$ 59/mês |
+| Escritório | 1.000 | R$ 249/mês |
+| Pro | 5.000 | R$ 599/mês |
 
-## Deploy on Vercel
+## Desenvolvimento
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# Instalar dependências
+npm install
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Rodar localmente
+npm run dev
+
+# Build
+npm run build
+```
+
+### Variáveis de Ambiente
+
+Copie `.env.example` para `.env.local` e preencha:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+KV_REST_API_URL=
+KV_REST_API_TOKEN=
+```
