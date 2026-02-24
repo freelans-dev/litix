@@ -1,5 +1,3 @@
-import { kv } from '@vercel/kv'
-
 const RATE_LIMITS: Record<string, number> = {
   free: 60,
   solo: 120,
@@ -15,6 +13,12 @@ export async function checkRateLimit(
   const limit = RATE_LIMITS[plan] ?? 60
   if (limit === -1) return { allowed: true, remaining: -1, resetAt: 0 }
 
+  // KV is optional — skip rate limiting when not configured (local dev)
+  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+    return { allowed: true, remaining: limit, resetAt: 0 }
+  }
+
+  const { kv } = await import('@vercel/kv')
   const windowKey = Math.floor(Date.now() / 60000) // 1-minute sliding window
   const key = `rate:${tenantId}:${windowKey}`
 

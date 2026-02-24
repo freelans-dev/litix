@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { getTenantContext } from '@/lib/auth'
 import { z } from 'zod'
 
@@ -25,7 +25,7 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
   }
 
-  const supabase = await createClient()
+  const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('webhook_endpoints')
     .update({ ...parsed.data, updated_at: new Date().toISOString() })
@@ -47,7 +47,7 @@ export async function DELETE(
   const ctx = await getTenantContext()
   if (!ctx.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const supabase = await createClient()
+  const supabase = createServiceClient()
   const { error } = await supabase
     .from('webhook_endpoints')
     .delete()

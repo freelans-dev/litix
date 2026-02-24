@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { getTenantContext } from '@/lib/auth'
 import { generateWebhookSecret } from '@/lib/crypto'
 import { z } from 'zod'
@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest) {
   const ctx = await getTenantContext()
   if (!ctx.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const supabase = await createClient()
+  const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('webhook_endpoints')
     .select('id, name, url, events, is_active, created_at')
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Webhooks not available on free plan', upgrade_url: '/pricing' }, { status: 402 })
   }
 
-  const supabase = await createClient()
+  const supabase = createServiceClient()
 
   if (limit !== -1) {
     const { count } = await supabase
