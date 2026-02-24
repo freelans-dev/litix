@@ -1,26 +1,219 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  /* ── Litix Semantic Tokens ───────────────────────── */
+  --color-alert-warning: var(--alert-warning);
+  --color-alert-warning-fg: var(--alert-warning-fg);
+  --color-alert-critical: var(--alert-critical);
+  --color-alert-critical-fg: var(--alert-critical-fg);
+  --color-alert-info: var(--alert-info);
+  --color-success: var(--success);
+  --color-success-fg: var(--success-fg);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ── LITIX DESIGN SYSTEM — Light Mode ───────────────
+   Paleta: Azul Jurídico profundo (#1e3a5f) como primary
+   Âmbar (#f59e0b) para alertas / warnings
+   Vermelho (#dc2626) para crítico/urgente
+   Verde (#16a34a) para sucesso/ativo
+───────────────────────────────────────────────────── */
+:root {
+  --radius: 0.5rem;
+
+  /* Backgrounds */
+  --background: oklch(0.98 0.005 240);     /* #f8fafc — quase branco com leve azul */
+  --foreground: oklch(0.18 0.02 240);      /* #1e293b — slate escuro */
+
+  /* Card / Surface */
+  --card: oklch(1 0 0);                    /* #ffffff */
+  --card-foreground: oklch(0.18 0.02 240);
+
+  /* Popover */
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.02 240);
+
+  /* Primary — Azul Jurídico (#1e3a5f → oklch aprox) */
+  --primary: oklch(0.32 0.09 245);         /* #1e3a5f */
+  --primary-foreground: oklch(0.99 0 0);   /* white */
+
+  /* Secondary — cinza claro */
+  --secondary: oklch(0.95 0.005 240);      /* #f1f5f9 */
+  --secondary-foreground: oklch(0.32 0.09 245);
+
+  /* Muted */
+  --muted: oklch(0.96 0.004 240);
+  --muted-foreground: oklch(0.52 0.02 240); /* #64748b */
+
+  /* Accent — azul claro hover */
+  --accent: oklch(0.94 0.02 245);
+  --accent-foreground: oklch(0.32 0.09 245);
+
+  /* Destructive — vermelho */
+  --destructive: oklch(0.57 0.22 27);      /* #dc2626 */
+
+  /* Border / Input */
+  --border: oklch(0.90 0.008 240);         /* #e2e8f0 */
+  --input: oklch(0.90 0.008 240);
+  --ring: oklch(0.52 0.12 245);            /* azul foco */
+
+  /* Sidebar — navy mais escuro */
+  --sidebar: oklch(0.28 0.09 245);         /* #162032 */
+  --sidebar-foreground: oklch(0.92 0.01 240);
+  --sidebar-primary: oklch(0.65 0.12 245);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.35 0.08 245);
+  --sidebar-accent-foreground: oklch(0.95 0.01 240);
+  --sidebar-border: oklch(0.35 0.06 245);
+  --sidebar-ring: oklch(0.52 0.12 245);
+
+  /* ── Litix Semantic ── */
+  /* Warning (âmbar) — 80% limite, deadlines */
+  --alert-warning: oklch(0.78 0.15 75);    /* #f59e0b */
+  --alert-warning-fg: oklch(0.35 0.10 60);
+
+  /* Critical (vermelho) — hard limit, urgente */
+  --alert-critical: oklch(0.57 0.22 27);   /* #dc2626 */
+  --alert-critical-fg: oklch(0.99 0 0);
+
+  /* Info (azul) */
+  --alert-info: oklch(0.60 0.15 245);
+
+  /* Success (verde) */
+  --success: oklch(0.52 0.14 150);         /* #16a34a */
+  --success-fg: oklch(0.99 0 0);
+
+  /* Charts */
+  --chart-1: oklch(0.52 0.14 150);  /* verde */
+  --chart-2: oklch(0.60 0.15 245);  /* azul */
+  --chart-3: oklch(0.78 0.15 75);   /* âmbar */
+  --chart-4: oklch(0.57 0.22 27);   /* vermelho */
+  --chart-5: oklch(0.55 0.12 290);  /* roxo */
+}
+
+.dark {
+  --background: oklch(0.13 0.02 245);      /* #0f172a */
+  --foreground: oklch(0.93 0.008 240);     /* #e2e8f0 */
+
+  --card: oklch(0.18 0.025 245);           /* #1e293b */
+  --card-foreground: oklch(0.93 0.008 240);
+
+  --popover: oklch(0.18 0.025 245);
+  --popover-foreground: oklch(0.93 0.008 240);
+
+  --primary: oklch(0.65 0.14 245);         /* azul mais claro no dark */
+  --primary-foreground: oklch(0.10 0.02 245);
+
+  --secondary: oklch(0.24 0.04 245);
+  --secondary-foreground: oklch(0.93 0.008 240);
+
+  --muted: oklch(0.24 0.03 245);
+  --muted-foreground: oklch(0.60 0.02 240);
+
+  --accent: oklch(0.26 0.05 245);
+  --accent-foreground: oklch(0.93 0.008 240);
+
+  --destructive: oklch(0.70 0.19 22);
+
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.65 0.14 245);
+
+  --sidebar: oklch(0.11 0.03 245);
+  --sidebar-foreground: oklch(0.85 0.01 240);
+  --sidebar-primary: oklch(0.65 0.14 245);
+  --sidebar-primary-foreground: oklch(0.10 0.02 245);
+  --sidebar-accent: oklch(0.20 0.04 245);
+  --sidebar-accent-foreground: oklch(0.85 0.01 240);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.65 0.14 245);
+
+  --alert-warning: oklch(0.82 0.14 75);
+  --alert-warning-fg: oklch(0.25 0.06 60);
+  --alert-critical: oklch(0.70 0.19 22);
+  --alert-critical-fg: oklch(0.99 0 0);
+  --alert-info: oklch(0.65 0.15 245);
+  --success: oklch(0.62 0.14 150);
+  --success-fg: oklch(0.10 0.02 150);
+
+  --chart-1: oklch(0.62 0.14 150);
+  --chart-2: oklch(0.65 0.15 245);
+  --chart-3: oklch(0.82 0.14 75);
+  --chart-4: oklch(0.70 0.19 22);
+  --chart-5: oklch(0.65 0.14 290);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+
+  /* CNJ number — monospace formatting */
+  .cnj {
+    font-feature-settings: "tnum" 1;
+    letter-spacing: 0.01em;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Litix Utility Classes ─────────────────────── */
+@layer utilities {
+  /* Process status badges */
+  .badge-ativo    { @apply bg-success/10 text-success border border-success/20; }
+  .badge-inativo  { @apply bg-muted text-muted-foreground border border-border; }
+  .badge-urgente  { @apply bg-alert-critical/10 text-alert-critical border border-alert-critical/20; }
+  .badge-prazo    { @apply bg-alert-warning/10 text-alert-warning-fg border border-alert-warning/30; }
+
+  /* Alert inbox types */
+  .alert-movement   { @apply border-l-4 border-l-alert-info; }
+  .alert-deadline   { @apply border-l-4 border-l-alert-warning; }
+  .alert-critical   { @apply border-l-4 border-l-alert-critical; }
+
+  /* Completeness bar track */
+  .completeness-track { @apply h-1.5 rounded-full bg-muted overflow-hidden; }
 }
