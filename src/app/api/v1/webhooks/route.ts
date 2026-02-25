@@ -11,7 +11,7 @@ const PLAN_LIMITS: Record<string, number> = {
 const schema = z.object({
   name: z.string().min(2).max(80),
   url: z.string().url(),
-  events: z.array(z.enum(['process.movement', 'process.deadline', 'process.status'])).min(1),
+  events: z.array(z.enum(['process.movement', 'process.deadline', 'process.status', 'process.updated'])).min(1),
 })
 
 // GET /api/v1/webhooks

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getTenantContext } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { fetchCaseFromJudit } from '@/lib/judit-fetch'
+import { fetchCaseFromJudit, buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
+import { dispatchWebhooks } from '@/lib/webhook-dispatcher'
 
 // POST /api/v1/cases/:caseId/refresh — trigger immediate consultation from Judit
 export async function POST(
@@ -32,22 +33,10 @@ export async function POST(
   const juditData = await fetchCaseFromJudit(caseData.cnj)
 
   if (juditData) {
+    const updatePayload = buildCaseUpdateFromJudit(juditData)
     await supabase
       .from('monitored_cases')
-      .update({
-        tribunal: juditData.tribunal ?? null,
-        area: juditData.area,
-        classe: juditData.classe,
-        assunto_principal: juditData.assunto_principal,
-        juiz: juditData.juiz,
-        valor_causa: juditData.valor_causa,
-        data_distribuicao: juditData.data_distribuicao,
-        status: juditData.status,
-        partes_json: juditData.partes_json,
-        provider: juditData.provider,
-        last_checked_at: new Date().toISOString(),
-        movement_count: juditData.movimentos?.length ?? 0,
-      })
+      .update(updatePayload)
       .eq('id', caseData.id)
 
     if (juditData.movimentos && juditData.movimentos.length > 0) {
@@ -65,12 +54,32 @@ export async function POST(
         ignoreDuplicates: true,
       })
     }
-  }
 
-  await supabase
-    .from('monitored_cases')
-    .update({ last_checked_at: new Date().toISOString() })
-    .eq('id', caseData.id)
+    // Dispatch webhooks with full case data (fire-and-forget)
+    const cutoff = new Date(Date.now() - 30_000).toISOString()
+    const { data: newMovements } = await supabase
+      .from('case_movements')
+      .select('*')
+      .eq('case_id', caseData.id)
+      .gte('detected_at', cutoff)
+
+    if (newMovements && newMovements.length > 0) {
+      const { data: updatedCase } = await supabase
+        .from('monitored_cases')
+        .select('*')
+        .eq('id', caseData.id)
+        .single()
+
+      if (updatedCase) {
+        dispatchWebhooks(ctx.tenantId, 'process.movement', updatedCase, newMovements)
+      }
+    }
+  } else {
+    await supabase
+      .from('monitored_cases')
+      .update({ last_checked_at: new Date().toISOString() })
+      .eq('id', caseData.id)
+  }
 
   return NextResponse.json({ queued: true, cnj: caseData.cnj, updated: !!juditData })
 }

@@ -6,7 +6,7 @@ import { z } from 'zod'
 const patchSchema = z.object({
   name: z.string().min(2).max(80).optional(),
   url: z.string().url().optional(),
-  events: z.array(z.enum(['process.movement', 'process.deadline', 'process.status'])).optional(),
+  events: z.array(z.enum(['process.movement', 'process.deadline', 'process.status', 'process.updated'])).optional(),
   is_active: z.boolean().optional(),
 })
 

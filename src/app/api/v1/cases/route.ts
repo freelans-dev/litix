@@ -4,7 +4,8 @@ import { getTenantContext } from '@/lib/auth'
 import { checkPlanLimit } from '@/lib/plan-limits'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { isValidCNJ } from '@/lib/crypto'
-import { fetchCaseFromJudit } from '@/lib/judit-fetch'
+import { fetchCaseFromJudit, buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
+import { dispatchWebhooks } from '@/lib/webhook-dispatcher'
 import { z } from 'zod'
 
 // GET /api/v1/cases — list monitored cases for tenant
@@ -117,22 +118,10 @@ export async function POST(req: NextRequest) {
     if (!juditData) return
     const svc = createServiceClient()
 
+    const updatePayload = buildCaseUpdateFromJudit(juditData, tribunal)
     await svc
       .from('monitored_cases')
-      .update({
-        tribunal: juditData.tribunal ?? tribunal ?? null,
-        area: juditData.area,
-        classe: juditData.classe,
-        assunto_principal: juditData.assunto_principal,
-        juiz: juditData.juiz,
-        valor_causa: juditData.valor_causa,
-        data_distribuicao: juditData.data_distribuicao,
-        status: juditData.status,
-        partes_json: juditData.partes_json,
-        provider: juditData.provider,
-        last_checked_at: new Date().toISOString(),
-        movement_count: juditData.movimentos?.length ?? 0,
-      })
+      .update(updatePayload)
       .eq('id', data.id)
 
     // Save movements to case_movements
@@ -150,6 +139,26 @@ export async function POST(req: NextRequest) {
         onConflict: 'case_id,movement_date,description',
         ignoreDuplicates: true,
       })
+    }
+
+    // Dispatch webhooks with full case data
+    const cutoff = new Date(Date.now() - 30_000).toISOString()
+    const { data: newMovements } = await svc
+      .from('case_movements')
+      .select('*')
+      .eq('case_id', data.id)
+      .gte('detected_at', cutoff)
+
+    if (newMovements && newMovements.length > 0) {
+      const { data: updatedCase } = await svc
+        .from('monitored_cases')
+        .select('*')
+        .eq('id', data.id)
+        .single()
+
+      if (updatedCase) {
+        dispatchWebhooks(ctx.tenantId, 'process.movement', updatedCase, newMovements)
+      }
     }
   }).catch(() => { /* background fetch failure is non-fatal */ })
 

@@ -22,6 +22,7 @@ const AVAILABLE_EVENTS = [
   { id: 'process.movement', label: 'Nova movimentação' },
   { id: 'process.deadline', label: 'Prazo se aproximando' },
   { id: 'process.status', label: 'Mudança de status' },
+  { id: 'process.updated', label: 'Dados do escritório editados' },
 ]
 
 export function CreateWebhookForm({ tenantId }: { tenantId: string }) {
