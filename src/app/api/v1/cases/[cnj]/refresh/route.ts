@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getTenantContext } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { fetchCaseFromJudit } from '@/lib/judit-fetch'
 
-// POST /api/v1/cases/:caseId/refresh — trigger immediate consultation
+// POST /api/v1/cases/:caseId/refresh — trigger immediate consultation from Judit
 export async function POST(
   _req: NextRequest,
   context: { params: Promise<{ cnj: string }> }
@@ -27,12 +28,49 @@ export async function POST(
 
   if (!caseData) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  // Update last_checked_at to trigger re-check on next monitoring cycle
-  // In production, this would enqueue a Trigger.dev task for immediate refresh
+  // Fetch from Judit and update record
+  const juditData = await fetchCaseFromJudit(caseData.cnj)
+
+  if (juditData) {
+    await supabase
+      .from('monitored_cases')
+      .update({
+        tribunal: juditData.tribunal ?? null,
+        area: juditData.area,
+        classe: juditData.classe,
+        assunto_principal: juditData.assunto_principal,
+        juiz: juditData.juiz,
+        valor_causa: juditData.valor_causa,
+        data_distribuicao: juditData.data_distribuicao,
+        status: juditData.status,
+        partes_json: juditData.partes_json,
+        provider: juditData.provider,
+        last_checked_at: new Date().toISOString(),
+        movement_count: juditData.movimentos?.length ?? 0,
+      })
+      .eq('id', caseData.id)
+
+    if (juditData.movimentos && juditData.movimentos.length > 0) {
+      const movements = juditData.movimentos.map((m) => ({
+        tenant_id: ctx.tenantId,
+        case_id: caseData.id,
+        movement_date: m.data,
+        description: m.descricao,
+        type: m.tipo ?? null,
+        code: m.codigo ?? null,
+        provider: 'judit',
+      }))
+      await supabase.from('case_movements').upsert(movements, {
+        onConflict: 'case_id,movement_date,description',
+        ignoreDuplicates: true,
+      })
+    }
+  }
+
   await supabase
     .from('monitored_cases')
     .update({ last_checked_at: new Date().toISOString() })
     .eq('id', caseData.id)
 
-  return NextResponse.json({ queued: true, cnj: caseData.cnj })
+  return NextResponse.json({ queued: true, cnj: caseData.cnj, updated: !!juditData })
 }

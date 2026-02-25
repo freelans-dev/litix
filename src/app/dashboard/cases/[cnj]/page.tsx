@@ -5,7 +5,6 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { getTenantContext } from '@/lib/auth'
 import { formatCNJ } from '@/lib/crypto'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { MonitorToggle } from '@/features/cases/components/monitor-toggle'
 import { RefreshButton } from '@/features/cases/components/refresh-button'
 import {
@@ -17,6 +16,12 @@ import {
   ExternalLink,
   FileText,
   Scale,
+  User,
+  Users,
+  Gavel,
+  TrendingUp,
+  MapPin,
+  DollarSign,
 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -30,6 +35,8 @@ export async function generateMetadata(props: {
   return { title: `Processo ${formatCNJ(cnj)} — Litix` }
 }
 
+type Parte = { nome: string; lado: string; documento?: string; tipo_pessoa?: string }
+
 export default async function CaseDetailPage(props: {
   params: Promise<{ cnj: string }>
 }) {
@@ -37,46 +44,51 @@ export default async function CaseDetailPage(props: {
   const ctx = await getTenantContext()
   const supabase = createServiceClient()
 
-  // Load case
-  const { data: caseData } = await supabase
-    .from('monitored_cases')
-    .select('*')
-    .eq('tenant_id', ctx.tenantId)
-    .eq('cnj', cnj)
-    .maybeSingle()
+  const [{ data: caseData }, { data: movements }] = await Promise.all([
+    supabase
+      .from('monitored_cases')
+      .select('*')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('cnj', cnj)
+      .maybeSingle(),
+    supabase
+      .from('case_movements')
+      .select('*')
+      .eq('tenant_id', ctx.tenantId)
+      .order('movement_date', { ascending: false })
+      .limit(50)
+      .then(async (r) => {
+        // Will be filtered by case_id after we have caseData
+        return r
+      }),
+  ])
 
   if (!caseData) notFound()
 
-  // Load recent alerts for this case
-  const { data: alerts } = await supabase
-    .from('alerts')
+  // Load movements scoped to this case
+  const { data: caseMovements } = await supabase
+    .from('case_movements')
     .select('*')
-    .eq('tenant_id', ctx.tenantId)
     .eq('case_id', caseData.id)
-    .order('created_at', { ascending: false })
-    .limit(20)
+    .order('movement_date', { ascending: false })
+    .limit(50)
 
-  const alertTypeLabel: Record<string, string> = {
-    new_movement: 'Nova movimentação',
-    deadline_approaching: 'Prazo se aproximando',
-    status_change: 'Mudança de status',
-  }
+  const partes = (caseData.partes_json as Parte[] | null) ?? []
+  const autores = partes.filter((p) => ['autor', 'requerente', 'impetrante'].includes(p.lado))
+  const reus = partes.filter((p) => ['réu', 'reu', 'requerido', 'impetrado'].includes(p.lado))
+  const outros = partes.filter((p) => !['autor', 'requerente', 'impetrante', 'réu', 'reu', 'requerido', 'impetrado'].includes(p.lado))
 
-  const alertTypeBorder: Record<string, string> = {
-    new_movement: 'border-l-primary',
-    deadline_approaching: 'border-l-[var(--alert-warning)]',
-    status_change: 'border-l-destructive',
-  }
-
-  const alertTypeBg: Record<string, string> = {
-    new_movement: 'bg-primary/5',
-    deadline_approaching: 'bg-amber-500/5',
-    status_change: 'bg-destructive/5',
+  const statusColor: Record<string, string> = {
+    ativo: 'bg-success/10 text-success border-success/30',
+    finalizado: 'bg-muted text-muted-foreground border-border',
+    arquivado: 'bg-muted text-muted-foreground border-border',
+    suspenso: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
+    cancelado: 'bg-destructive/10 text-destructive border-destructive/30',
   }
 
   return (
     <div className="p-6 space-y-6 max-w-4xl">
-      {/* Breadcrumb + actions */}
+      {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <Link
@@ -86,76 +98,93 @@ export default async function CaseDetailPage(props: {
             <ArrowLeft size={14} />
             Processos
           </Link>
-          <h1 className="text-xl font-bold font-mono tracking-wide cnj">
+          <h1 className="text-xl font-bold font-mono tracking-wide">
             {formatCNJ(caseData.cnj)}
           </h1>
-          {caseData.tribunal && (
-            <p className="text-sm text-muted-foreground mt-0.5">{caseData.tribunal}</p>
+          {caseData.nome && (
+            <p className="text-sm text-muted-foreground mt-0.5 max-w-xl">{caseData.nome}</p>
           )}
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            {caseData.tribunal && (
+              <Badge variant="outline" className="text-xs">{caseData.tribunal}</Badge>
+            )}
+            {caseData.area && (
+              <Badge variant="outline" className="text-xs capitalize">{caseData.area}</Badge>
+            )}
+            {caseData.status && (
+              <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${statusColor[caseData.status] ?? statusColor.ativo}`}>
+                {caseData.status.charAt(0).toUpperCase() + caseData.status.slice(1)}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <RefreshButton caseId={caseData.id} cnj={caseData.cnj} />
-          <MonitorToggle
-            caseId={caseData.id}
-            enabled={caseData.monitor_enabled}
-          />
+          <MonitorToggle caseId={caseData.id} enabled={caseData.monitor_enabled} />
         </div>
       </div>
 
-      {/* Info cards */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Info grid */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {caseData.juiz && (
+          <InfoCard icon={<Gavel size={14} />} label="Juiz" value={caseData.juiz} />
+        )}
+        {caseData.assunto_principal && (
+          <InfoCard icon={<Scale size={14} />} label="Assunto" value={caseData.assunto_principal} />
+        )}
+        {caseData.data_distribuicao && (
+          <InfoCard
+            icon={<Calendar size={14} />}
+            label="Distribuição"
+            value={format(new Date(caseData.data_distribuicao), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+          />
+        )}
+        {caseData.valor_causa && (
+          <InfoCard
+            icon={<DollarSign size={14} />}
+            label="Valor da causa"
+            value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(caseData.valor_causa)}
+          />
+        )}
+        {caseData.comarca && (
+          <InfoCard icon={<MapPin size={14} />} label="Comarca" value={caseData.comarca} />
+        )}
         <InfoCard
-          icon={<Scale size={16} />}
-          label="Tribunal"
-          value={caseData.tribunal ?? 'Não identificado'}
-        />
-        <InfoCard
-          icon={<FileText size={16} />}
-          label="Provider principal"
-          value={caseData.provider ?? 'Automático'}
-          badge
-        />
-        <InfoCard
-          icon={<Clock size={16} />}
+          icon={<Clock size={14} />}
           label="Última consulta"
           value={
             caseData.last_checked_at
-              ? formatDistanceToNow(new Date(caseData.last_checked_at), {
-                  addSuffix: true,
-                  locale: ptBR,
-                })
+              ? formatDistanceToNow(new Date(caseData.last_checked_at), { addSuffix: true, locale: ptBR })
               : 'Nunca consultado'
           }
         />
         <InfoCard
-          icon={<Calendar size={16} />}
+          icon={<FileText size={14} />}
+          label="Provider"
+          value={caseData.provider ?? 'Automático'}
+        />
+        <InfoCard
+          icon={<Calendar size={14} />}
           label="Cadastrado em"
-          value={format(new Date(caseData.created_at), "d 'de' MMMM 'de' yyyy", {
-            locale: ptBR,
-          })}
+          value={format(new Date(caseData.created_at), "d MMM yyyy", { locale: ptBR })}
         />
       </div>
 
-      {/* Monitoring status banner */}
-      <div
-        className={`rounded-lg border p-4 flex items-center gap-3 ${
-          caseData.monitor_enabled
-            ? 'border-success/30 bg-success/5'
-            : 'border-border bg-muted/30'
-        }`}
-      >
+      {/* Monitoring status */}
+      <div className={`rounded-lg border p-4 flex items-center gap-3 ${
+        caseData.monitor_enabled ? 'border-success/30 bg-success/5' : 'border-border bg-muted/30'
+      }`}>
         {caseData.monitor_enabled ? (
           <>
             <span className="relative flex h-3 w-3 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success/60"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-success"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success/60" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-success" />
             </span>
             <p className="text-sm">
               <span className="font-medium text-success">Monitoramento ativo.</span>{' '}
               <span className="text-muted-foreground">
-                O Litix verifica este processo em todos os providers automaticamente. Você será
-                alertado em até 1 hora após qualquer movimentação.
+                O Litix verifica este processo automaticamente e alertará em até 1 hora após movimentações.
               </span>
             </p>
           </>
@@ -163,13 +192,93 @@ export default async function CaseDetailPage(props: {
           <>
             <BellOff size={16} className="text-muted-foreground shrink-0" />
             <p className="text-sm text-muted-foreground">
-              Monitoramento pausado. Ative para receber alertas automáticos de movimentações.
+              Monitoramento pausado. Ative para receber alertas automáticos.
             </p>
           </>
         )}
       </div>
 
-      {/* Providers consulted */}
+      {/* Partes */}
+      {partes.length > 0 && (
+        <div className="rounded-lg border bg-card p-5 space-y-4">
+          <h2 className="text-sm font-semibold flex items-center gap-2">
+            <Users size={15} />
+            Partes do processo
+          </h2>
+
+          {autores.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Polo Ativo
+              </p>
+              {autores.map((p, i) => <ParteItem key={i} parte={p} />)}
+            </div>
+          )}
+
+          {reus.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Polo Passivo
+              </p>
+              {reus.map((p, i) => <ParteItem key={i} parte={p} />)}
+            </div>
+          )}
+
+          {outros.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Outros
+              </p>
+              {outros.map((p, i) => <ParteItem key={i} parte={p} />)}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Movimentações */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold flex items-center gap-2">
+            <Bell size={16} />
+            Histórico de movimentações
+            {caseMovements && caseMovements.length > 0 && (
+              <Badge variant="secondary" className="ml-1">{caseMovements.length}</Badge>
+            )}
+          </h2>
+        </div>
+
+        {caseMovements && caseMovements.length > 0 ? (
+          <div className="space-y-2">
+            {caseMovements.map((mov) => (
+              <div key={mov.id} className="rounded-lg border bg-card px-4 py-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm leading-relaxed">{mov.description}</p>
+                    {mov.type && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{mov.type}</p>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground shrink-0 mt-0.5">
+                    {format(new Date(mov.movement_date), "d MMM yyyy", { locale: ptBR })}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed bg-card p-10 text-center">
+            <Bell size={28} className="text-muted-foreground/30 mx-auto mb-3" />
+            <p className="font-medium">Nenhuma movimentação registrada ainda</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {caseData.last_checked_at
+                ? 'Aguarde — o Litix está buscando as movimentações.'
+                : 'Clique em "Atualizar" para buscar os dados agora.'}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Providers */}
       <div className="rounded-lg border bg-card p-5">
         <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
           <ExternalLink size={14} />
@@ -192,106 +301,35 @@ export default async function CaseDetailPage(props: {
             </span>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground mt-3">
-          O Litix consulta todos os providers em paralelo e unifica os resultados. Em caso de
-          falha de um provider, os demais garantem cobertura.
-        </p>
-      </div>
-
-      {/* Alerts / Movement history */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold flex items-center gap-2">
-            <Bell size={16} />
-            Histórico de movimentações
-            {alerts && alerts.length > 0 && (
-              <Badge variant="secondary" className="ml-1">
-                {alerts.length}
-              </Badge>
-            )}
-          </h2>
-        </div>
-
-        {alerts && alerts.length > 0 ? (
-          <div className="space-y-2">
-            {alerts.map((alert) => (
-              <div
-                key={alert.id}
-                className={`relative rounded-lg border-l-4 border border-border pl-4 pr-4 py-3.5 ${
-                  alertTypeBorder[alert.type] ?? 'border-l-border'
-                } ${alertTypeBg[alert.type] ?? ''} ${!alert.read ? 'bg-primary/3' : ''}`}
-              >
-                {!alert.read && (
-                  <span className="absolute top-3.5 right-3.5 w-2 h-2 rounded-full bg-primary" />
-                )}
-                <div className="flex items-start justify-between gap-4 pr-4">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        {alertTypeLabel[alert.type] ?? alert.type}
-                      </span>
-                    </div>
-                    <p className="text-sm font-medium mt-0.5">{alert.title}</p>
-                    {alert.body && (
-                      <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
-                        {alert.body}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {formatDistanceToNow(new Date(alert.created_at), {
-                    addSuffix: true,
-                    locale: ptBR,
-                  })}
-                  {' · '}
-                  {format(new Date(alert.created_at), "d MMM yyyy 'às' HH:mm", {
-                    locale: ptBR,
-                  })}
-                </p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-lg border border-dashed bg-card p-10 text-center">
-            <Bell size={28} className="text-muted-foreground/30 mx-auto mb-3" />
-            <p className="font-medium">Nenhuma movimentação registrada ainda</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {caseData.monitor_enabled
-                ? 'O Litix está monitorando e vai alertar quando houver novidades.'
-                : 'Ative o monitoramento para receber alertas automáticos.'}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   )
 }
 
-function InfoCard({
-  icon,
-  label,
-  value,
-  badge,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-  badge?: boolean
-}) {
+function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-lg border bg-card p-4 space-y-1">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         {icon}
         {label}
       </div>
-      {badge ? (
-        <Badge variant="outline" className="text-xs font-normal">
-          {value}
-        </Badge>
-      ) : (
-        <p className="text-sm font-medium">{value}</p>
-      )}
+      <p className="text-sm font-medium">{value}</p>
+    </div>
+  )
+}
+
+function ParteItem({ parte }: { parte: Parte }) {
+  return (
+    <div className="flex items-start gap-2 py-1.5 border-b last:border-0">
+      <User size={13} className="text-muted-foreground mt-0.5 shrink-0" />
+      <div className="min-w-0">
+        <p className="text-sm font-medium leading-tight">{parte.nome}</p>
+        {parte.documento && (
+          <p className="text-xs text-muted-foreground">
+            {parte.documento.length === 11 ? 'CPF' : 'CNPJ'}: {parte.documento}
+          </p>
+        )}
+      </div>
     </div>
   )
 }

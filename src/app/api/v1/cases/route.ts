@@ -4,6 +4,7 @@ import { getTenantContext } from '@/lib/auth'
 import { checkPlanLimit } from '@/lib/plan-limits'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { isValidCNJ } from '@/lib/crypto'
+import { fetchCaseFromJudit } from '@/lib/judit-fetch'
 import { z } from 'zod'
 
 // GET /api/v1/cases — list monitored cases for tenant
@@ -110,6 +111,47 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Fetch process data from Judit in background and update the record
+  fetchCaseFromJudit(digits).then(async (juditData) => {
+    if (!juditData) return
+    const svc = createServiceClient()
+
+    await svc
+      .from('monitored_cases')
+      .update({
+        tribunal: juditData.tribunal ?? tribunal ?? null,
+        area: juditData.area,
+        classe: juditData.classe,
+        assunto_principal: juditData.assunto_principal,
+        juiz: juditData.juiz,
+        valor_causa: juditData.valor_causa,
+        data_distribuicao: juditData.data_distribuicao,
+        status: juditData.status,
+        partes_json: juditData.partes_json,
+        provider: juditData.provider,
+        last_checked_at: new Date().toISOString(),
+        movement_count: juditData.movimentos?.length ?? 0,
+      })
+      .eq('id', data.id)
+
+    // Save movements to case_movements
+    if (juditData.movimentos && juditData.movimentos.length > 0) {
+      const movements = juditData.movimentos.map((m) => ({
+        tenant_id: ctx.tenantId,
+        case_id: data.id,
+        movement_date: m.data,
+        description: m.descricao,
+        type: m.tipo ?? null,
+        code: m.codigo ?? null,
+        provider: 'judit',
+      }))
+      await svc.from('case_movements').upsert(movements, {
+        onConflict: 'case_id,movement_date,description',
+        ignoreDuplicates: true,
+      })
+    }
+  }).catch(() => { /* background fetch failure is non-fatal */ })
 
   return NextResponse.json(data, { status: 201 })
 }
