@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext } from '@/lib/auth'
-import Stripe from 'stripe'
+import { getStripeClient } from '@/lib/stripe'
 import { z } from 'zod'
 
 const PRICE_IDS: Record<string, string> = {
@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
   const ctx = await getTenantContext()
   if (!ctx.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const stripeKey = process.env.STRIPE_SECRET_KEY
-  if (!stripeKey) {
+  const stripe = getStripeClient()
+  if (!stripe) {
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
   }
 
@@ -35,8 +35,6 @@ export async function POST(req: NextRequest) {
   if (!priceId) {
     return NextResponse.json({ error: `Price ID for "${plan}" not configured` }, { status: 503 })
   }
-
-  const stripe = new Stripe(stripeKey, { apiVersion: '2026-01-28.clover' })
   const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
   const { data: tenant } = await supabase

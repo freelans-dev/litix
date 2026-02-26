@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Trash2, Eye, EyeOff, Copy } from 'lucide-react'
+import Link from 'next/link'
+import { Trash2, Eye, EyeOff, Copy, FileText } from 'lucide-react'
 import type { Database } from '@/types/database'
 
 type Endpoint = Database['public']['Tables']['webhook_endpoints']['Row']
@@ -75,6 +76,12 @@ export function WebhookList({ endpoints: initial }: WebhookListProps) {
               </p>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
+              <Button variant="ghost" size="sm" asChild className="text-xs">
+                <Link href={`/dashboard/settings/webhooks/${ep.id}`}>
+                  <FileText size={14} className="mr-1" />
+                  Logs
+                </Link>
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"

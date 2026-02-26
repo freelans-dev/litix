@@ -2,17 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createServiceClient } from '@/lib/supabase/service'
 import { invalidatePlanCache } from '@/lib/plan-limits'
+import { getStripeClient } from '@/lib/stripe'
 
 // Stripe needs raw body for signature verification — force Node.js runtime
 export const runtime = 'nodejs'
 
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
-
-function getStripe() {
-  const key = process.env.STRIPE_SECRET_KEY
-  if (!key) throw new Error('STRIPE_SECRET_KEY not configured')
-  return new Stripe(key, { apiVersion: '2026-01-28.clover' })
-}
 
 /**
  * Map Stripe subscription status to our internal status.
@@ -83,7 +78,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   const supabase = createServiceClient()
-  const stripe = getStripe()
+  const stripe = getStripeClient()!
 
   // Set stripe_customer_id on tenant
   const customerId = typeof session.customer === 'string'
@@ -262,7 +257,7 @@ export async function POST(req: NextRequest) {
   let event: Stripe.Event
 
   try {
-    const stripe = getStripe()
+    const stripe = getStripeClient()!
     event = stripe.webhooks.constructEvent(rawBody, signature, STRIPE_WEBHOOK_SECRET)
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown'
