@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Loader2, Pencil } from 'lucide-react'
+import { Loader2, Pencil, Search, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,14 +28,8 @@ import {
 } from '@/components/ui/sheet'
 
 const SETORES = [
-  'Contencioso',
-  'Consultivo',
-  'Trabalhista',
-  'Tributario',
-  'Familia',
-  'Criminal',
-  'Empresarial',
-  'Outro',
+  'Contencioso', 'Consultivo', 'Trabalhista', 'Tributario',
+  'Familia', 'Criminal', 'Empresarial', 'Outro',
 ]
 
 const CONTINGENCIAS = [
@@ -57,7 +51,6 @@ const RISCOS = [
 ]
 
 const formSchema = z.object({
-  cliente: z.string().max(200).optional(),
   relacionamento: z.string().max(200).optional(),
   responsavel: z.string().max(200).optional(),
   setor: z.string().max(100).optional(),
@@ -73,6 +66,8 @@ const formSchema = z.object({
 })
 
 type FormData = z.infer<typeof formSchema>
+
+type Client = { id: string; name: string; documento?: string; tipo_pessoa?: string }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CaseData = Record<string, any>
@@ -92,10 +87,182 @@ function formatCurrency(value: number | null | undefined): string {
   }).format(value)
 }
 
+function ClientCombobox({
+  selectedId,
+  selectedName,
+  onSelect,
+}: {
+  selectedId: string | null
+  selectedName: string
+  onSelect: (id: string | null, name: string) => void
+}) {
+  const [query, setQuery] = useState('')
+  const [clients, setClients] = useState<Client[]>([])
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newDocumento, setNewDocumento] = useState('')
+  const [creating, setCreating] = useState(false)
+
+  const searchClients = useCallback(async (q: string) => {
+    if (q.length < 2) { setClients([]); return }
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/v1/clients?q=${encodeURIComponent(q)}&limit=10`)
+      if (res.ok) {
+        const json = await res.json()
+        setClients(json.data ?? [])
+      }
+    } catch { /* ignore */ }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => searchClients(query), 300)
+    return () => clearTimeout(timer)
+  }, [query, searchClients])
+
+  async function handleCreate() {
+    if (!newName.trim()) return
+    setCreating(true)
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const body: Record<string, any> = { name: newName.trim() }
+      if (newDocumento.trim()) body.documento = newDocumento.replace(/\D/g, '')
+
+      const res = await fetch('/api/v1/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (res.ok) {
+        const client = await res.json()
+        onSelect(client.id, client.name)
+        setShowCreate(false)
+        setShowDropdown(false)
+        setNewName('')
+        setNewDocumento('')
+        toast.success('Cliente criado')
+      } else {
+        const err = await res.json().catch(() => ({}))
+        toast.error(err.error ?? 'Erro ao criar cliente')
+      }
+    } catch { toast.error('Erro de conexao') }
+    setCreating(false)
+  }
+
+  if (selectedId) {
+    return (
+      <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
+        <span className="text-sm flex-1 truncate">{selectedName}</span>
+        <button
+          type="button"
+          onClick={() => onSelect(null, '')}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <X size={14} />
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative">
+      <div className="relative">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Buscar cliente por nome..."
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setShowDropdown(true) }}
+          onFocus={() => setShowDropdown(true)}
+          className="pl-9"
+        />
+      </div>
+      {showDropdown && (query.length >= 2 || showCreate) && (
+        <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-md max-h-48 overflow-y-auto">
+          {loading && (
+            <div className="px-3 py-2 text-xs text-muted-foreground">Buscando...</div>
+          )}
+          {!loading && clients.length === 0 && query.length >= 2 && !showCreate && (
+            <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum cliente encontrado</div>
+          )}
+          {clients.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors"
+              onClick={() => {
+                onSelect(c.id, c.name)
+                setQuery('')
+                setShowDropdown(false)
+              }}
+            >
+              <span className="font-medium">{c.name}</span>
+              {c.documento && (
+                <span className="text-xs text-muted-foreground ml-2">
+                  {c.documento.length === 11 ? 'CPF' : 'CNPJ'}: {c.documento}
+                </span>
+              )}
+            </button>
+          ))}
+          {!showCreate ? (
+            <button
+              type="button"
+              className="w-full text-left px-3 py-2 text-sm text-primary hover:bg-accent transition-colors flex items-center gap-1.5 border-t"
+              onClick={() => { setShowCreate(true); setNewName(query) }}
+            >
+              <Plus size={13} />
+              Criar novo cliente
+            </button>
+          ) : (
+            <div className="p-3 border-t space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground">Novo cliente</p>
+              <Input
+                placeholder="Nome"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                autoFocus
+              />
+              <Input
+                placeholder="CPF ou CNPJ (opcional)"
+                value={newDocumento}
+                onChange={(e) => setNewDocumento(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={creating || !newName.trim()}
+                  onClick={handleCreate}
+                  className="gap-1"
+                >
+                  {creating && <Loader2 size={12} className="animate-spin" />}
+                  Criar
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCreate(false)}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function EditOfficeDataSheet({ caseData }: { caseData: CaseData }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(caseData.client_id ?? null)
+  const [selectedClientName, setSelectedClientName] = useState<string>(caseData.cliente ?? '')
 
   const {
     register,
@@ -106,7 +273,6 @@ export function EditOfficeDataSheet({ caseData }: { caseData: CaseData }) {
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      cliente: caseData.cliente ?? '',
       relacionamento: caseData.relacionamento ?? '',
       responsavel: caseData.responsavel ?? '',
       setor: caseData.setor ?? '',
@@ -127,11 +293,14 @@ export function EditOfficeDataSheet({ caseData }: { caseData: CaseData }) {
   async function onSubmit(data: FormData) {
     setSaving(true)
 
-    // Build PATCH body with only non-empty changed fields
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const body: Record<string, any> = {}
 
-    if (data.cliente) body.cliente = data.cliente
+    // Client selection
+    if (selectedClientId !== (caseData.client_id ?? null)) {
+      body.client_id = selectedClientId
+    }
+
     if (data.relacionamento) body.relacionamento = data.relacionamento
     if (data.responsavel) body.responsavel = data.responsavel
     if (data.setor) body.setor = data.setor
@@ -207,11 +376,15 @@ export function EditOfficeDataSheet({ caseData }: { caseData: CaseData }) {
                 Cliente
               </legend>
               <div className="space-y-2">
-                <Label htmlFor="cliente">Nome do cliente</Label>
-                <Input id="cliente" placeholder="Ex: Empresa ABC Ltda" {...register('cliente')} />
-                {errors.cliente && (
-                  <p className="text-xs text-destructive">{errors.cliente.message}</p>
-                )}
+                <Label>Cliente</Label>
+                <ClientCombobox
+                  selectedId={selectedClientId}
+                  selectedName={selectedClientName}
+                  onSelect={(id, name) => {
+                    setSelectedClientId(id)
+                    setSelectedClientName(name)
+                  }}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="relacionamento">Relacionamento</Label>
@@ -317,19 +490,11 @@ export function EditOfficeDataSheet({ caseData }: { caseData: CaseData }) {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="provisionamento">Provisionamento (R$)</Label>
-                  <Input
-                    id="provisionamento"
-                    placeholder="50.000,00"
-                    {...register('provisionamento')}
-                  />
+                  <Input id="provisionamento" placeholder="50.000,00" {...register('provisionamento')} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="reserva">Reserva (R$)</Label>
-                  <Input
-                    id="reserva"
-                    placeholder="10.000,00"
-                    {...register('reserva')}
-                  />
+                  <Input id="reserva" placeholder="10.000,00" {...register('reserva')} />
                 </div>
               </div>
             </fieldset>

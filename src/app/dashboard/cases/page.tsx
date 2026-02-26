@@ -97,10 +97,10 @@ export default async function CasesPage(props: {
                   Processo (CNJ)
                 </th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider hidden md:table-cell">
-                  Tribunal
+                  Cliente
                 </th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider hidden lg:table-cell">
-                  Provider
+                  Tribunal
                 </th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">
                   Monitoramento
@@ -124,15 +124,11 @@ export default async function CasesPage(props: {
                       {formatCNJ(c.cnj)}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                    {c.tribunal ?? '—'}
+                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell text-xs">
+                    {c.cliente ?? '—'}
                   </td>
-                  <td className="px-4 py-3 hidden lg:table-cell">
-                    {c.provider ? (
-                      <Badge variant="outline" className="text-xs">
-                        {c.provider}
-                      </Badge>
-                    ) : '—'}
+                  <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
+                    {c.tribunal ?? '—'}
                   </td>
                   <td className="px-4 py-3">
                     {c.monitor_enabled ? (

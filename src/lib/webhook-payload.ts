@@ -49,6 +49,7 @@ export interface WebhookCasePayload {
       tipo_pessoa?: string
       advogados?: Array<{ nome: string; oab?: string }>
     }> | null
+    client_id: string | null
     cliente: string | null
     responsavel: string | null
     setor: string | null
@@ -122,6 +123,7 @@ export function buildWebhookPayload(
       completeness: caseRow.completeness ?? null,
       movement_count: caseRow.movement_count ?? 0,
       partes_json: caseRow.partes_json ?? null,
+      client_id: caseRow.client_id ?? null,
       cliente: caseRow.cliente ?? null,
       responsavel: caseRow.responsavel ?? null,
       setor: caseRow.setor ?? null,

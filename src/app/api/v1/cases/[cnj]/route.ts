@@ -5,6 +5,7 @@ import { dispatchWebhooks } from '@/lib/webhook-dispatcher'
 import { z } from 'zod'
 
 const patchSchema = z.object({
+  client_id: z.string().uuid().nullable().optional(),
   cliente: z.string().max(200).optional(),
   responsavel: z.string().max(200).optional(),
   setor: z.string().max(100).optional(),
@@ -80,6 +81,19 @@ export async function PATCH(
   updates.updated_at = new Date().toISOString()
 
   const supabase = createServiceClient()
+
+  // Auto-sync: when client_id is set, populate cliente TEXT with client name
+  if (updates.client_id) {
+    const { data: client } = await supabase
+      .from('clients')
+      .select('name')
+      .eq('id', updates.client_id as string)
+      .single()
+    if (client) updates.cliente = client.name
+  } else if (updates.client_id === null) {
+    // Client unlinked — clear cliente TEXT too
+    updates.cliente = null
+  }
 
   const { data, error } = await supabase
     .from('monitored_cases')
