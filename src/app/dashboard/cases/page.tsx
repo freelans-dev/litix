@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { createServiceClient } from '@/lib/supabase/service'
+import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext } from '@/lib/auth'
 import { formatCNJ } from '@/lib/crypto'
 import { Badge } from '@/components/ui/badge'
@@ -16,7 +16,7 @@ export default async function CasesPage(props: {
 }) {
   const searchParams = await props.searchParams
   const ctx = await getTenantContext()
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
   let query = supabase
     .from('monitored_cases')

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createServiceClient } from '@/lib/supabase/service'
+import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext } from '@/lib/auth'
 import { WebhookList } from '@/features/webhooks/components/webhook-list'
 import { CreateWebhookForm } from '@/features/webhooks/components/create-webhook-form'
@@ -21,7 +21,7 @@ const PLAN_WEBHOOK_LIMIT: Record<string, number> = {
 
 export default async function WebhooksPage() {
   const ctx = await getTenantContext()
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
   const { data: endpoints } = await supabase
     .from('webhook_endpoints')

@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
-import { createServiceClient } from '@/lib/supabase/service'
+import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext } from '@/lib/auth'
 import { FileText, Bell, Activity, Clock } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Início' }
 
-async function getStats(tenantId: string) {
-  const supabase = createServiceClient()
+async function getStats(tenantId: string, userId: string) {
+  const supabase = await createTenantClient(tenantId, userId)
 
   const [casesResult, alertsResult, unreadResult] = await Promise.all([
     supabase.from('monitored_cases').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
@@ -24,7 +24,7 @@ async function getStats(tenantId: string) {
 
 export default async function DashboardPage() {
   const ctx = await getTenantContext()
-  const stats = await getStats(ctx.tenantId)
+  const stats = await getStats(ctx.tenantId, ctx.userId)
 
   const statCards = [
     { label: 'Total de Processos', value: stats.totalCases, icon: FileText, color: 'text-primary' },

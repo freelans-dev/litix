@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createServiceClient } from '@/lib/supabase/service'
+import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext } from '@/lib/auth'
 import { InviteMemberForm } from '@/features/team/components/invite-member-form'
 import { TeamMemberList } from '@/features/team/components/team-member-list'
@@ -19,7 +19,7 @@ const PLAN_USER_LIMIT: Record<string, number> = {
 
 export default async function TeamPage() {
   const ctx = await getTenantContext()
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
   const plan = ctx.plan ?? 'free'
   const userLimit = PLAN_USER_LIMIT[plan] ?? 1

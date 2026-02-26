@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createServiceClient } from '@/lib/supabase/service'
+import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext } from '@/lib/auth'
 import { OABImportForm } from '@/features/cases/components/oab-import-form'
 import { Badge } from '@/components/ui/badge'
@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function ProfilePage() {
   const ctx = await getTenantContext()
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -23,7 +23,7 @@ export default async function ProfilePage() {
 
   // Get OAB import history
   const { data: imports } = await supabase
-    .from('oab_imports' as 'monitored_cases') // typed workaround
+    .from('oab_imports')
     .select('*')
     .eq('tenant_id', ctx.tenantId)
     .order('created_at', { ascending: false })
