@@ -127,7 +127,7 @@ export default async function ProfilePage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-sm font-medium">
-                      OAB {imp.oab_number as string}/{imp.oab_state as string}
+                      OAB {imp.oab_number as string}/{imp.oab_uf as string}
                     </span>
                     <Badge variant={statusVariant[(imp.status as string)] ?? 'secondary'}>
                       {statusLabel[(imp.status as string)] ?? imp.status}

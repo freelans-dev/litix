@@ -1,14 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   FileText,
   Bell,
   Webhook,
   Users,
+  Building2,
   CreditCard,
   Search,
   Settings,
@@ -29,7 +30,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 
 interface NavItem {
   href: string
@@ -42,6 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'Início', icon: LayoutDashboard },
   { href: '/dashboard/cases', label: 'Processos', icon: FileText },
   { href: '/dashboard/alerts', label: 'Alertas', icon: Bell },
+  { href: '/dashboard/clients', label: 'Clientes', icon: Building2 },
   { href: '/dashboard/settings/webhooks', label: 'Webhooks', icon: Webhook },
   { href: '/dashboard/settings/team', label: 'Equipe', icon: Users },
   { href: '/dashboard/billing', label: 'Assinatura', icon: CreditCard },
@@ -65,6 +66,14 @@ export function DashboardShell({
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const searchRef = useRef<HTMLInputElement>(null)
+
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      const q = searchRef.current?.value.trim()
+      if (q) router.push(`/dashboard/cases?q=${encodeURIComponent(q)}`)
+    }
+  }
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -241,8 +250,10 @@ export function DashboardShell({
               className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
             />
             <input
+              ref={searchRef}
               placeholder="Buscar por CNJ ou processo..."
               className="w-full h-9 pl-9 pr-4 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring cnj"
+              onKeyDown={handleSearchKeyDown}
             />
           </div>
           <div className="flex items-center gap-3">

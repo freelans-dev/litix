@@ -72,6 +72,8 @@ type Client = { id: string; name: string; documento?: string; tipo_pessoa?: stri
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CaseData = Record<string, any>
 
+type TeamMember = { id: string; name: string }
+
 function parseCurrency(value: string): number | undefined {
   if (!value) return undefined
   const cleaned = value.replace(/[R$\s.]/g, '').replace(',', '.')
@@ -257,7 +259,7 @@ function ClientCombobox({
   )
 }
 
-export function EditOfficeDataSheet({ caseData }: { caseData: CaseData }) {
+export function EditOfficeDataSheet({ caseData, members = [] }: { caseData: CaseData; members?: TeamMember[] }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -399,7 +401,23 @@ export function EditOfficeDataSheet({ caseData }: { caseData: CaseData }) {
               </legend>
               <div className="space-y-2">
                 <Label htmlFor="responsavel">Responsavel</Label>
-                <Input id="responsavel" placeholder="Nome do advogado responsavel" {...register('responsavel')} />
+                {members.length > 0 ? (
+                  <Select
+                    value={watch('responsavel') ?? ''}
+                    onValueChange={(val) => setValue('responsavel', val)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecione o responsavel" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {members.map((m) => (
+                        <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input id="responsavel" placeholder="Nome do advogado responsavel" {...register('responsavel')} />
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="setor">Setor</Label>

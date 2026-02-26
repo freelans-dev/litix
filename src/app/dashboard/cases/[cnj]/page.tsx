@@ -73,6 +73,20 @@ export default async function CaseDetailPage(props: {
     .order('movement_date', { ascending: false })
     .limit(50)
 
+  // Fetch team members for the responsavel select
+  const { data: teamMembers } = await supabase
+    .from('tenant_members')
+    .select('user_id')
+    .eq('tenant_id', ctx.tenantId)
+    .eq('is_active', true)
+  const memberUserIds = (teamMembers ?? []).map((m) => m.user_id)
+  const { data: memberProfiles } = memberUserIds.length
+    ? await supabase.from('profiles').select('id, full_name').in('id', memberUserIds)
+    : { data: [] }
+  const members = (memberProfiles ?? [])
+    .filter((p) => p.full_name)
+    .map((p) => ({ id: p.id, name: p.full_name! }))
+
   const partes = (caseData.partes_json as Parte[] | null) ?? []
   const autores = partes.filter((p) => ['autor', 'requerente', 'impetrante'].includes(p.lado))
   const reus = partes.filter((p) => ['réu', 'reu', 'requerido', 'impetrado'].includes(p.lado))
@@ -287,7 +301,7 @@ export default async function CaseDetailPage(props: {
             <Briefcase size={15} />
             Dados do escritorio
           </h2>
-          <EditOfficeDataSheet caseData={caseData} />
+          <EditOfficeDataSheet caseData={caseData} members={members} />
         </div>
         {(caseData.cliente || caseData.responsavel || caseData.contingencia || caseData.probabilidade || caseData.provisionamento) ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
