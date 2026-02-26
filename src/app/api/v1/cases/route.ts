@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createTenantClient } from '@/lib/supabase/tenant'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getTenantContext } from '@/lib/auth'
 import { checkPlanLimit } from '@/lib/plan-limits'
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
   const { allowed } = await checkRateLimit(ctx.tenantId, ctx.plan)
   if (!allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
 
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
   const { searchParams } = req.nextUrl
   const q = searchParams.get('q')
   const monitor = searchParams.get('monitor')
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid CNJ format' }, { status: 422 })
   }
 
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
   // Check for duplicates
   const { data: existing } = await supabase

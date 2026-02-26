@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/service'
+import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { fetchCaseFromJudit, buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
@@ -18,7 +18,7 @@ export async function POST(
   const { allowed } = await checkRateLimit(ctx.tenantId, ctx.plan)
   if (!allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
 
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
   // Verify case belongs to tenant
   const { data: caseData } = await supabase

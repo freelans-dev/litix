@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/service'
+import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext, checkRole } from '@/lib/auth'
 
 // DELETE /api/v1/team/:memberId — remove member
@@ -14,7 +14,7 @@ export async function DELETE(
   const denied = checkRole(ctx, 'admin')
   if (denied) return denied
 
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
   // Prevent removing owner
   const { data: member } = await supabase

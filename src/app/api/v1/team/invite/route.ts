@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createTenantClient } from '@/lib/supabase/tenant'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getTenantContext, checkRole } from '@/lib/auth'
 import { z } from 'zod'
@@ -30,9 +31,9 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
-  // Check user limit
+  // Check user limit (tenant-scoped client for data query)
   if (limit !== -1) {
     const { count } = await supabase
       .from('tenant_members')
@@ -54,8 +55,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
   }
 
-  // Invite via Supabase Auth invite
-  const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
+  // Invite via Supabase Auth admin API (requires service_role)
+  const serviceClient = createServiceClient()
+  const { error: inviteError } = await serviceClient.auth.admin.inviteUserByEmail(
     parsed.data.email,
     {
       data: { invited_role: parsed.data.role, tenant_id: ctx.tenantId },

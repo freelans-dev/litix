@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/service'
+import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext } from '@/lib/auth'
 
 // GET /api/v1/alerts
@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   const ctx = await getTenantContext()
   if (!ctx.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
   const { searchParams } = req.nextUrl
   const filter = searchParams.get('filter') // 'unread' | 'deadline'
   const page = parseInt(searchParams.get('page') ?? '1')
@@ -35,7 +35,7 @@ export async function PATCH(req: NextRequest) {
   const ctx = await getTenantContext()
   if (!ctx.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
   const { error } = await supabase
     .from('alerts')
     .update({ read: true })

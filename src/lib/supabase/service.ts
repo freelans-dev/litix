@@ -2,9 +2,18 @@ import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
 /**
- * Service-role client — bypasses RLS.
- * Use ONLY in server-side trusted contexts: Trigger.dev jobs, webhooks, crons.
- * NEVER expose to browser or use in API routes that handle user requests.
+ * Service-role client — bypasses RLS completely.
+ *
+ * ALLOWED uses:
+ * - Stripe/billing webhooks (no user auth context)
+ * - Cron jobs (src/app/api/v1/cron/)
+ * - Background dispatchers (webhook-dispatcher, alert-generator)
+ * - Auth fallback in getTenantContext() (src/lib/auth.ts)
+ * - Supabase Admin API (auth.admin.inviteUserByEmail, etc.)
+ *
+ * FORBIDDEN uses:
+ * - User-facing API routes → use createTenantClient() from @/lib/supabase/tenant
+ * - Dashboard pages → use createClient() from @/lib/supabase/server
  */
 export function createServiceClient() {
   return createClient<Database>(

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/service'
+import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext } from '@/lib/auth'
 import Stripe from 'stripe'
 import { z } from 'zod'
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   }
 
   const stripe = new Stripe(stripeKey, { apiVersion: '2026-01-28.clover' })
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
   const { data: tenant } = await supabase
     .from('tenants')

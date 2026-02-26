@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/service'
+import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext } from '@/lib/auth'
 
 // PATCH /api/v1/alerts/:id — mark single alert read/unread
@@ -13,7 +13,7 @@ export async function PATCH(
 
   const body = await req.json()
   const isRead: boolean = body.read
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
   const { data, error } = await supabase
     .from('alerts')

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/service'
+import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext } from '@/lib/auth'
 import { dispatchWebhooks } from '@/lib/webhook-dispatcher'
 import { z } from 'zod'
@@ -31,7 +31,7 @@ export async function GET(
   const ctx = await getTenantContext()
   if (!ctx.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
   const { data, error } = await supabase
     .from('monitored_cases')
     .select('*')
@@ -80,7 +80,7 @@ export async function PATCH(
 
   updates.updated_at = new Date().toISOString()
 
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
   // Auto-sync: when client_id is set, populate cliente TEXT with client name
   if (updates.client_id) {
@@ -125,7 +125,7 @@ export async function DELETE(
   const ctx = await getTenantContext()
   if (!ctx.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
   const { error } = await supabase
     .from('monitored_cases')
     .delete()

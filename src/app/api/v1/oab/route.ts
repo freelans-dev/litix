@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/service'
 import { getTenantContext } from '@/lib/auth'
 import { z } from 'zod'
 

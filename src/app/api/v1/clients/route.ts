@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/service'
+import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext } from '@/lib/auth'
 import { z } from 'zod'
 
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   const ctx = await getTenantContext()
   if (!ctx.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
   const { searchParams } = req.nextUrl
   const q = searchParams.get('q')
   const active = searchParams.get('active') !== 'false' // default true
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
   }
 
-  const supabase = createServiceClient()
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
   // Check for duplicate documento in same tenant
   if (parsed.data.documento) {
