@@ -4,6 +4,14 @@ import { fetchCaseFromJudit, buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
 import { generateAlerts } from '@/lib/alert-generator'
 import { dispatchWebhooks } from '@/lib/webhook-dispatcher'
 
+interface CaseToMonitor {
+  id: string
+  cnj: string
+  tenant_id: string
+  tribunal: string | null
+  last_checked_at: string | null
+}
+
 const BATCH_SIZE = 10
 const CRON_SECRET = process.env.CRON_SECRET
 
@@ -28,10 +36,10 @@ export async function POST(req: NextRequest) {
   const { data: casesToCheck, error: selectError } = await supabase.rpc(
     'get_cases_to_monitor',
     { batch_limit: BATCH_SIZE }
-  ).select()
+  )
 
   // Fallback: if RPC doesn't exist, use raw query
-  let cases = casesToCheck
+  let cases = casesToCheck as CaseToMonitor[] | null
   if (selectError) {
     // Direct query fallback
     const { data: fallbackCases } = await supabase

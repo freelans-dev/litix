@@ -383,6 +383,41 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =============================================================================
+-- 12b. CASE MEMBERS (M:M — quais membros são responsáveis por cada caso)
+-- Merged from 001_multi_tenant_schema.sql
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS case_members (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id     UUID NOT NULL REFERENCES monitored_cases(id) ON DELETE CASCADE,
+  tenant_id   UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  member_id   UUID NOT NULL REFERENCES tenant_members(id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(case_id, member_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_case_members_case   ON case_members(case_id);
+CREATE INDEX IF NOT EXISTS idx_case_members_member ON case_members(member_id);
+
+-- =============================================================================
+-- 12c. AUDIT LOG
+-- Merged from 001_multi_tenant_schema.sql
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS audit_log (
+  id          BIGSERIAL PRIMARY KEY,
+  tenant_id   UUID REFERENCES tenants(id) ON DELETE SET NULL,
+  member_id   UUID REFERENCES tenant_members(id) ON DELETE SET NULL,
+  action      TEXT NOT NULL,
+  table_name  TEXT,
+  record_id   UUID,
+  old_data    JSONB,
+  new_data    JSONB,
+  ip_address  INET,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_tenant ON audit_log(tenant_id, created_at DESC);
+
+-- =============================================================================
 -- 14. TRIGGER updated_at
 -- =============================================================================
 
@@ -426,6 +461,8 @@ ALTER TABLE webhook_endpoints    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE webhook_deliveries   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subscriptions        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE oab_imports          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE case_members         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_log            ENABLE ROW LEVEL SECURITY;
 
 -- plan_limits é read-only e público (sem dados sensíveis)
 ALTER TABLE plan_limits ENABLE ROW LEVEL SECURITY;
@@ -472,7 +509,7 @@ BEGIN
   FOR tbl IN SELECT unnest(ARRAY[
     'monitored_cases', 'case_movements', 'alerts',
     'webhook_endpoints', 'webhook_deliveries',
-    'subscriptions', 'oab_imports'
+    'subscriptions', 'oab_imports', 'case_members'
   ])
   LOOP
     EXECUTE format(
@@ -493,6 +530,13 @@ BEGIN
     );
   END LOOP;
 END $$;
+
+-- AUDIT LOG: apenas owners e admins podem ler
+CREATE POLICY "owner_admin_only" ON audit_log
+  USING (
+    tenant_id = auth.tenant_id()
+    AND auth.user_role() IN ('owner', 'admin')
+  );
 
 -- =============================================================================
 -- 17. TRIGGER — Criar profile + tenant automaticamente no signup
