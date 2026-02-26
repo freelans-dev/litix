@@ -6,6 +6,8 @@ import { formatCNJ } from '@/lib/crypto'
 import { Bell, BellOff, FileText, Clock } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { MarkReadButton } from '@/features/alerts/components/mark-read-button'
+import { MarkAllReadButton } from '@/features/alerts/components/mark-all-read-button'
 
 export const metadata: Metadata = { title: 'Alertas' }
 
@@ -65,20 +67,21 @@ export default async function AlertsPage(props: {
           {unreadCount ? (
             <p className="text-sm text-muted-foreground mt-0.5">
               <span className="text-alert-critical font-medium">
-                {unreadCount} não lido{unreadCount !== 1 ? 's' : ''}
+                {unreadCount} nao lido{unreadCount !== 1 ? 's' : ''}
               </span>
             </p>
           ) : (
             <p className="text-sm text-muted-foreground mt-0.5">Tudo em dia</p>
           )}
         </div>
+        {unreadCount ? <MarkAllReadButton /> : null}
       </div>
 
       {/* Filters */}
       <div className="flex gap-2 flex-wrap">
         {[
           { label: 'Todos', value: undefined },
-          { label: 'Não lidos', value: 'unread' },
+          { label: 'Nao lidos', value: 'unread' },
           { label: 'Prazos', value: 'deadline' },
         ].map((f) => (
           <Link
@@ -107,7 +110,7 @@ export default async function AlertsPage(props: {
               <div
                 key={alert.id}
                 className={`rounded-lg border bg-card p-4 ${colorClass} ${
-                  !alert.read ? 'bg-primary/[0.02]' : ''
+                  !alert.read ? 'bg-primary/[0.02]' : 'opacity-60'
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -131,6 +134,7 @@ export default async function AlertsPage(props: {
                         {alert.title}
                       </p>
                       <div className="flex items-center gap-1.5 shrink-0">
+                        {!alert.read && <MarkReadButton alertId={alert.id} />}
                         {!alert.read && (
                           <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
                         )}
@@ -172,8 +176,8 @@ export default async function AlertsPage(props: {
             <p className="font-medium">Sem alertas</p>
             <p className="text-sm text-muted-foreground mt-1">
               {searchParams.filter === 'unread'
-                ? 'Você leu todos os alertas.'
-                : 'Ative o monitoramento em um processo para receber alertas de movimentação.'}
+                ? 'Voce leu todos os alertas.'
+                : 'Ative o monitoramento em um processo para receber alertas de movimentacao.'}
             </p>
           </div>
         </div>

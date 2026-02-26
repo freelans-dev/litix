@@ -4,6 +4,7 @@ import { getTenantContext } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { fetchCaseFromJudit, buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
 import { dispatchWebhooks } from '@/lib/webhook-dispatcher'
+import { generateAlerts } from '@/lib/alert-generator'
 
 // POST /api/v1/cases/:caseId/refresh — trigger immediate consultation from Judit
 export async function POST(
@@ -22,7 +23,7 @@ export async function POST(
   // Verify case belongs to tenant
   const { data: caseData } = await supabase
     .from('monitored_cases')
-    .select('id, cnj')
+    .select('id, cnj, tribunal')
     .eq('tenant_id', ctx.tenantId)
     .eq('id', caseId)
     .maybeSingle()
@@ -73,6 +74,9 @@ export async function POST(
       if (updatedCase) {
         dispatchWebhooks(ctx.tenantId, 'process.movement', updatedCase, newMovements)
       }
+
+      // Generate alerts for all tenant members (fire-and-forget)
+      generateAlerts(ctx.tenantId, caseData.id, caseData.cnj, caseData.tribunal, newMovements)
     }
   } else {
     await supabase
