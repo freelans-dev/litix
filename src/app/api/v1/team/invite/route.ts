@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { getTenantContext, requireRole } from '@/lib/auth'
+import { getTenantContext, checkRole } from '@/lib/auth'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -17,7 +17,8 @@ export async function POST(req: NextRequest) {
   const ctx = await getTenantContext()
   if (!ctx.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  requireRole(ctx, 'admin')
+  const denied = checkRole(ctx, 'admin')
+  if (denied) return denied
 
   const plan = ctx.plan ?? 'free'
   const limit = PLAN_LIMITS[plan] ?? 1

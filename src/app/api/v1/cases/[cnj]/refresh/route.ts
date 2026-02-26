@@ -15,7 +15,7 @@ export async function POST(
   const ctx = await getTenantContext()
   if (!ctx.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const allowed = await checkRateLimit(ctx.tenantId, ctx.plan as 'free' | 'solo' | 'escritorio' | 'pro' | 'enterprise')
+  const { allowed } = await checkRateLimit(ctx.tenantId, ctx.plan)
   if (!allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
 
   const supabase = createServiceClient()

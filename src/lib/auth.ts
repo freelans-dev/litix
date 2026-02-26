@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
@@ -76,11 +77,29 @@ const ROLE_LEVELS: Record<TenantContext['role'], number> = {
   viewer: 1,
 }
 
+/**
+ * Check if the user has the required role level.
+ * Returns a NextResponse with 403 if insufficient, or null if OK.
+ * Usage: const denied = checkRole(ctx, 'admin'); if (denied) return denied;
+ */
+export function checkRole(
+  context: TenantContext,
+  minRole: TenantContext['role']
+): NextResponse | null {
+  if (ROLE_LEVELS[context.role] < ROLE_LEVELS[minRole]) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+  return null
+}
+
+/**
+ * @deprecated Use checkRole() instead. This throws which doesn't work properly in Route Handlers.
+ */
 export function requireRole(
   context: TenantContext,
   minRole: TenantContext['role']
 ): void {
   if (ROLE_LEVELS[context.role] < ROLE_LEVELS[minRole]) {
-    throw new Response('Forbidden', { status: 403 })
+    throw new Error('Forbidden: insufficient role')
   }
 }
