@@ -128,7 +128,7 @@ export async function fetchCaseFromJudit(cnj: string): Promise<JuditProcessData 
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapResponseData(rd: Record<string, any>, requestId: string): JuditProcessData {
+export function mapResponseData(rd: Record<string, any>, requestId: string): JuditProcessData {
   const subjects = rd.subjects as Array<{ code?: string; name?: string }> | undefined
   const classifications = rd.classifications as Array<{ code?: string; name?: string }> | undefined
   const courts = rd.courts as Array<{ code?: string; name?: string }> | undefined
