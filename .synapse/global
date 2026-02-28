@@ -1,0 +1,16 @@
+# Global Rules — Litix SaaS
+# Always-on rules for all agents and contexts
+
+Always use TypeScript with strict mode. No 'any' type — use 'unknown' with type guards.
+Use absolute imports with @/ alias (mapped to ./src/*). Never use relative imports.
+Follow Next.js 16 App Router conventions: app directory, server components by default, 'use client' only when needed.
+Use Supabase for database, auth, and edge functions. Never bypass RLS with service_role in client-side code.
+Styling via Tailwind CSS 4 and shadcn/ui components from radix-ui.
+Server state: React Query (@tanstack/react-query). Client state: React context or Zustand when needed.
+Validation: Zod for runtime schemas, TypeScript for compile-time types. Use react-hook-form with @hookform/resolvers.
+Error handling: Always wrap async operations in try/catch with typed error messages via pino logger.
+API routes in src/app/api/v1/ follow RESTful naming. Use getTenantContext() for auth in every route.
+Multi-tenant architecture: ALL database queries MUST scope to tenant via Supabase RLS policies.
+Background jobs via Trigger.dev (src/trigger/). Billing via Stripe. Email via Resend.
+Feature modules in src/features/ follow domain-driven organization: alerts, auth, billing, cases, clients, monitoring, team, webhooks.
+Legal data providers in packages/providers/: DataJud (free), Codilo, Judit (most complete), Escavador, Predictus. Progressive cascade strategy (ADR-001).

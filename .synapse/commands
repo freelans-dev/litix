@@ -1,0 +1,25 @@
+# Star-command rules — L7
+
+[*help] COMMAND:
+COMMANDS_CMD_HELP_0=Show available AIOS commands and current agent capabilities.
+COMMANDS_CMD_HELP_1=List the pipeline appropriate for the current context.
+COMMANDS_CMD_HELP_2=Show story status if a story is active.
+
+[*create-story] COMMAND:
+COMMANDS_CMD_CREATE_STORY_0=Use the story template at .aios-core/product/templates/story-tmpl.yaml.
+COMMANDS_CMD_CREATE_STORY_1=Create the story in docs/stories/ with acceptance criteria and File List sections.
+COMMANDS_CMD_CREATE_STORY_2=Assign appropriate priority and complexity estimate.
+COMMANDS_CMD_CREATE_STORY_3=Follow naming convention: LITIX-{epic}.{story}-{description}.md.
+
+[*exit] COMMAND:
+COMMANDS_CMD_EXIT_0=Deactivate the current agent context.
+COMMANDS_CMD_EXIT_1=Summarize work completed in the session.
+
+[*gotcha] COMMAND:
+COMMANDS_CMD_GOTCHA_0=Record a gotcha in .aios/gotchas.json.
+COMMANDS_CMD_GOTCHA_1=Include title, category, severity, description, and workaround.
+COMMANDS_CMD_GOTCHA_2=Categories: Framework, Database, Testing, Performance, Security, Deployment, Process.
+
+[*task] COMMAND:
+COMMANDS_CMD_TASK_0=Execute a named task from .aios-core/development/tasks/.
+COMMANDS_CMD_TASK_1=Load the task file and follow its instructions step by step.

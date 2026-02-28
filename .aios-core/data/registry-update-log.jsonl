@@ -1,0 +1,4 @@
+{"timestamp":"2026-02-27T22:40:46.211Z","action":"change","path":".aios-core/product/templates/ide-rules/claude-rules.md","trigger":"watcher"}
+{"timestamp":"2026-02-28T01:46:56.350Z","action":"add","path":".aios-core/data/tech-presets/node-express.md","trigger":"watcher"}
+{"timestamp":"2026-02-28T01:46:56.351Z","action":"add","path":".aios-core/data/tech-presets/python-fastapi.md","trigger":"watcher"}
+{"timestamp":"2026-02-28T01:46:56.351Z","action":"change","path":".aios-core/data/technical-preferences.md","trigger":"watcher"}

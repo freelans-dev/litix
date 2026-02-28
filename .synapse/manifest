@@ -1,0 +1,56 @@
+# ==========================================
+# SYNAPSE Manifest — Litix SaaS
+# AIOS v4.4.6 | Generated: 2026-02-28
+# ==========================================
+
+# Global settings
+DEVMODE=false
+
+# ------------------------------------------
+# Layer 0: Constitution (NON-NEGOTIABLE)
+# ------------------------------------------
+CONSTITUTION_STATE=active
+CONSTITUTION_ALWAYS_ON=true
+CONSTITUTION_NON_NEGOTIABLE=true
+
+# ------------------------------------------
+# Layer 1: Global rules (always-on)
+# ------------------------------------------
+GLOBAL_STATE=active
+GLOBAL_ALWAYS_ON=true
+
+# Layer 1: Context bracket rules (always-on)
+CONTEXT_STATE=active
+CONTEXT_ALWAYS_ON=true
+
+# ------------------------------------------
+# Layer 2: Agent domains
+# ------------------------------------------
+AGENT_DEV_STATE=active
+AGENT_DEV_AGENT_TRIGGER=dev
+
+AGENT_QA_STATE=active
+AGENT_QA_AGENT_TRIGGER=qa
+
+AGENT_ARCHITECT_STATE=active
+AGENT_ARCHITECT_AGENT_TRIGGER=architect
+
+AGENT_PO_STATE=active
+AGENT_PO_AGENT_TRIGGER=po
+
+AGENT_SM_STATE=active
+AGENT_SM_AGENT_TRIGGER=sm
+
+AGENT_DEVOPS_STATE=active
+AGENT_DEVOPS_AGENT_TRIGGER=devops
+
+AGENT_PM_STATE=active
+AGENT_PM_AGENT_TRIGGER=pm
+
+AGENT_DATA_ENGINEER_STATE=active
+AGENT_DATA_ENGINEER_AGENT_TRIGGER=data-engineer
+
+# ------------------------------------------
+# Layer 7: Star-command rules
+# ------------------------------------------
+COMMANDS_STATE=active

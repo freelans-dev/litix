@@ -1,7 +1,7 @@
 metadata:
   version: 1.0.0
-  lastUpdated: '2026-02-16T04:49:07.416Z'
-  entityCount: 506
+  lastUpdated: '2026-02-28T01:46:56.352Z'
+  entityCount: 508
   checksumAlgorithm: sha256
 entities:
   tasks:
@@ -4676,21 +4676,23 @@ entities:
     claude-rules:
       path: .aios-core/product/templates/ide-rules/claude-rules.md
       type: template
-      purpose: Synkra AIOS Development Rules for Claude Code
+      purpose: CLAUDE.md - Synkra AIOS ({{projectName}})
       keywords:
         - claude
         - rules
+        - claude.md
         - synkra
         - aios
-        - development
+        - ({{projectname}})
       usedBy: []
-      dependencies: []
+      dependencies:
+        - store
       adaptability:
         score: 0.5
         constraints: []
         extensionPoints: []
-      checksum: sha256:13d5fb7858534f6d49150a5dff642faa276c17b9d242f995369c5e7e1d37ae40
-      lastVerified: '2026-02-08T13:33:24.279Z'
+      checksum: sha256:0ca806647c400dce38bfc440075e780c197a7b5f7a64fd2a08d4878fc3d821d0
+      lastVerified: '2026-02-27T22:40:46.211Z'
     copilot-rules:
       path: .aios-core/product/templates/ide-rules/copilot-rules.md
       type: template
@@ -9120,8 +9122,8 @@ entities:
         score: 0.5
         constraints: []
         extensionPoints: []
-      checksum: sha256:7acc7123b9678ce4a48ee5c0e5f4d84665b7f3c34798178640c2c1e982c2e2c3
-      lastVerified: '2026-02-08T13:33:24.396Z'
+      checksum: sha256:7b060ad4e6613c5216d2640fbfe6e724010679eb3cc6a657b2b5ad329742f782
+      lastVerified: '2026-02-28T01:46:56.351Z'
     workflow-patterns:
       path: .aios-core/data/workflow-patterns.yaml
       type: data
@@ -9193,6 +9195,41 @@ entities:
         extensionPoints: []
       checksum: sha256:1a7262912c8c8e264d307f0d38a1109bdb2b9bff9ea7d8855c768835201aa59b
       lastVerified: '2026-02-08T13:33:24.397Z'
+    node-express:
+      path: .aios-core/data/tech-presets/node-express.md
+      type: data
+      purpose: '''Arquitetura para APIs REST com Express, TypeScript, Prisma e padroes de qualidade para produção'''
+      keywords:
+        - node
+        - express
+        - node.js
+        - tech
+        - preset
+      usedBy: []
+      dependencies: []
+      adaptability:
+        score: 0.5
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:c36b34e15836a7ade5a581a61aeb630162e354ff4439d1d44a8b87d0b76e6776
+      lastVerified: '2026-02-28T01:46:56.350Z'
+    python-fastapi:
+      path: .aios-core/data/tech-presets/python-fastapi.md
+      type: data
+      purpose: '''Arquitetura para APIs REST/GraphQL com FastAPI, SQLAlchemy, Pydantic e padroes de qualidade para produção'''
+      keywords:
+        - python
+        - fastapi
+        - tech
+        - preset
+      usedBy: []
+      dependencies: []
+      adaptability:
+        score: 0.5
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:f78fcb9ed2388e7f1570122a3b7b5df20a6fda9e24165509358bb397f39626f9
+      lastVerified: '2026-02-28T01:46:56.351Z'
 categories:
   - id: tasks
     description: Executable task workflows for agent operations

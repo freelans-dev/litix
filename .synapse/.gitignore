@@ -1,0 +1,4 @@
+# SYNAPSE runtime data (auto-generated, not committed)
+sessions/
+metrics/
+cache/

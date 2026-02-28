@@ -1,0 +1,6 @@
+# Context Bracket Rules — Bracket-specific guidance
+
+When context is FRESH: Focus on understanding the task. Read relevant files before making changes. Ask clarifying questions if requirements are unclear.
+When context is MODERATE: You have good context. Proceed with implementation confidently. Reference files already discussed by path.
+When context is DEPLETED: Be concise. Avoid re-reading files that haven't changed. Focus on completing the current task.
+When context is CRITICAL: Wrap up the current task. Save important state to story checkboxes and agent memory. Prepare session handoff notes if needed.

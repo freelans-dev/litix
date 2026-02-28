@@ -1,0 +1,14 @@
+# AIOS Constitution — 6 Articles (NON-NEGOTIABLE)
+# Source: .aios-core/constitution.md v1.0.0
+
+Art. I — CLI First (NON-NEGOTIABLE): CLI is the source of truth. All features MUST work 100% via CLI before any UI. Dashboards observe, never control. Priority: CLI > Observability > UI.
+
+Art. II — Agent Authority (NON-NEGOTIABLE): Only @devops can git push, create PRs, releases, and tags. Only @sm/@po can create stories. Only @architect makes architecture decisions. Only @qa issues quality verdicts. Agents MUST delegate when outside their scope.
+
+Art. III — Story-Driven Development (MUST): No code without a story in docs/stories/. Stories MUST have acceptance criteria before implementation. Track progress via checkboxes. Maintain File List in the story.
+
+Art. IV — No Invention (MUST): All spec statements trace to requirements (FR-*, NFR-*, CON-*) or verified research findings. Never add features not in requirements. Never assume unresearched implementation details.
+
+Art. V — Quality First (MUST): npm run lint, npm run typecheck, npm test, npm run build MUST all pass before merge. CodeRabbit MUST NOT report CRITICAL issues. Test coverage MUST NOT decrease.
+
+Art. VI — Absolute Imports (SHOULD): Always use @/ alias for imports. Never use relative imports (../../). Exception: same-module internal imports.

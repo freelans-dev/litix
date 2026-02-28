@@ -45,3 +45,13 @@ next-env.d.ts
 .aios-core/node_modules/
 .ai/
 .claude/agent-memory/
+
+# AIOS Runtime
+.aios/
+.aios-core/node_modules/
+.aios-installation-config.yaml
+
+# Synapse runtime data (sessions and metrics are generated, not committed)
+.synapse/sessions/
+.synapse/metrics/
+.synapse/cache/

@@ -1,0 +1,33 @@
+{
+  "$schema": "gotchas-registry",
+  "version": "1.0.0",
+  "description": "Registry of known gotchas, issues, and workarounds discovered during development. Populated automatically by AIOS agents via *gotcha command.",
+  "gotchas": [],
+  "categories": [
+    "Framework",
+    "Methodology",
+    "Tool",
+    "Process",
+    "Database",
+    "Deployment",
+    "Testing",
+    "Performance",
+    "Security"
+  ],
+  "severity_levels": ["info", "warning", "critical"],
+  "entry_template": {
+    "id": "GOTCHA-000",
+    "title": "",
+    "category": "",
+    "severity": "info",
+    "description": "",
+    "workaround": "",
+    "resolved": false,
+    "resolved_in": null,
+    "discovered_at": "",
+    "discovered_by": "",
+    "affected_agents": [],
+    "affected_files": [],
+    "tags": []
+  }
+}

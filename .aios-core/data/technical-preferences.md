@@ -7,9 +7,11 @@ Location: `.aios-core/data/tech-presets/`
 
 ### Available Presets
 
-| Preset         | Technologies                                                   | Best For                                         |
-| -------------- | -------------------------------------------------------------- | ------------------------------------------------ |
-| `nextjs-react` | Next.js 14+, React, TypeScript, Tailwind, Zustand, React Query | Fullstack web apps, SaaS, E-commerce, Dashboards |
+| Preset           | Technologies                                                   | Best For                                         |
+| ---------------- | -------------------------------------------------------------- | ------------------------------------------------ |
+| `nextjs-react`   | Next.js 16+, React, TypeScript, Tailwind, Zustand, React Query | Fullstack web apps, SaaS, E-commerce, Dashboards |
+| `python-fastapi` | Python 3.11+, FastAPI, SQLAlchemy 2.0, Pydantic v2, Alembic   | APIs REST, Microservices, Backend SaaS            |
+| `node-express`   | Node.js 20+, Express, TypeScript, Prisma, Zod                 | APIs REST, BFF, Microservices Node.js             |
 
 ### How to Use Presets
 

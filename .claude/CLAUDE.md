@@ -1,225 +1,330 @@
-# CLAUDE.md - Litix SaaS
+# CLAUDE.md - Synkra AIOS
 
-Este arquivo configura o comportamento do Claude Code ao trabalhar neste repositorio.
+Este arquivo configura o comportamento do Claude Code ao trabalhar neste repositório.
 
 ---
 
 ## Constitution
 
-O AIOS possui uma **Constitution formal** com principios inegociaveis e gates automaticos.
+O AIOS possui uma **Constitution formal** com princípios inegociáveis e gates automáticos.
 
 **Documento completo:** `.aios-core/constitution.md`
 
-**Principios fundamentais:**
+**Princípios fundamentais:**
 
-| Artigo | Principio | Severidade |
+| Artigo | Princípio | Severidade |
 |--------|-----------|------------|
+| I | CLI First | NON-NEGOTIABLE |
 | II | Agent Authority | NON-NEGOTIABLE |
 | III | Story-Driven Development | MUST |
 | IV | No Invention | MUST |
 | V | Quality First | MUST |
 | VI | Absolute Imports | SHOULD |
 
-**Gates automaticos bloqueiam violacoes.** Consulte a Constitution para detalhes completos.
+**Gates automáticos bloqueiam violações.** Consulte a Constitution para detalhes completos.
 
 ---
 
-## Sobre o Projeto
+## Language Configuration
 
-**Litix** e uma plataforma SaaS de monitoramento e consulta processual multi-provider para escritorios de advocacia no Brasil.
+Language preference is handled by Claude Code's native `language` setting (v2.1.0+).
+Configure in `~/.claude/settings.json` (global) or `.claude/settings.json` (project):
 
-### Stack Tecnica
+```json
+{ "language": "portuguese" }
+```
 
-| Camada | Tecnologia |
-|--------|-----------|
-| Frontend | Next.js 15 (App Router) + React 19 + TypeScript |
-| Styling | Tailwind CSS 4 + shadcn/ui |
-| Auth | Supabase Auth (cookie-based SSR) |
-| Database | Supabase PostgreSQL + RLS multi-tenant |
-| Billing | Stripe (Checkout + Webhooks + Portal) |
-| Caching | Vercel KV (Upstash Redis) |
-| Background Jobs | Vercel Cron + Trigger.dev (futuro) |
-| Deploy | Vercel |
-| Providers | Judit, DataJud, Codilo, Escavador, Predictus |
+The installer writes this automatically during `npx aios-core install`. No language config in `core-config.yaml`.
 
-### Supabase
-- Project ref: `iicaiojtjomtdkszgpwd`
-- Service client: `createServiceClient()` (bypasses RLS)
-- SSR client: `createSSRClient()` (cookie-based, respects RLS)
-- Auth hook: Edge Function para multi-tenant claims
+---
+
+## Premissa Arquitetural: CLI First
+
+O Synkra AIOS segue uma hierarquia clara de prioridades que deve guiar **TODAS** as decisões:
+
+```
+CLI First → Observability Second → UI Third
+```
+
+| Camada | Prioridade | Descrição |
+|--------|------------|-----------|
+| **CLI** | Máxima | Onde a inteligência vive. Toda execução, decisões e automação. |
+| **Observability** | Secundária | Observar e monitorar o que acontece no CLI em tempo real. |
+| **UI** | Terciária | Gestão pontual e visualizações quando necessário. |
+
+### Princípios Derivados
+
+1. **A CLI é a fonte da verdade** - Dashboards apenas observam, nunca controlam
+2. **Funcionalidades novas devem funcionar 100% via CLI** antes de ter qualquer UI
+3. **A UI nunca deve ser requisito** para operação do sistema
+4. **Observabilidade serve para entender** o que o CLI está fazendo, não para controlá-lo
+5. **Ao decidir onde implementar algo**, sempre prefira CLI > Observability > UI
+
+> **Referência formal:** Constitution Artigo I - CLI First (NON-NEGOTIABLE)
 
 ---
 
 ## Estrutura do Projeto
 
 ```
-litix-saas/
-├── .aios-core/              # Framework AIOS (agents, tasks, workflows)
-├── .claude/                 # Claude Code config
-│   ├── CLAUDE.md            # Este arquivo
-│   ├── commands/AIOS/agents/# Agent definitions
-│   └── rules/               # Rules adicionais
-├── docs/
-│   └── stories/             # Development stories (AIOS workflow)
-├── packages/
-│   └── providers/           # Multi-provider data fusion
-├── src/
-│   ├── app/                 # Next.js App Router
-│   │   ├── api/v1/          # REST API routes
-│   │   └── dashboard/       # Dashboard pages
-│   ├── components/ui/       # shadcn/ui components
-│   ├── features/            # Feature modules
-│   ├── lib/                 # Shared utilities
-│   │   ├── supabase/        # Supabase clients
-│   │   ├── auth.ts          # getTenantContext()
-│   │   ├── crypto.ts        # HMAC, CNJ formatting
-│   │   ├── plan-limits.ts   # Plan limit checking + KV cache
-│   │   ├── judit-fetch.ts   # Judit API integration
-│   │   ├── alert-generator.ts
-│   │   ├── webhook-dispatcher.ts
-│   │   └── webhook-payload.ts
-│   └── middleware.ts        # Auth middleware
-├── supabase/
-│   └── migrations/          # SQL migrations (ordered 001_, 002_, etc.)
-├── vercel.json              # Cron config
-└── .env.local               # Environment variables (never commit)
+aios-core/
+├── .aios-core/              # Core do framework
+│   ├── core/                # Módulos principais (orchestration, memory, etc.)
+│   ├── data/                # Knowledge base, entity registry
+│   ├── development/         # Agents, tasks, templates, checklists, scripts
+│   └── infrastructure/      # CI/CD templates, scripts
+├── .claude/
+│   ├── agents/              # Agentes Claude Code (26 total, inclui Chiefs)
+│   ├── commands/            # Comandos slash AIOS + Synapse
+│   ├── hooks/               # Hooks de governança (10 hooks)
+│   ├── rules/               # Regras MCP e contexto
+│   └── skills/              # Skills disponíveis (9 skills)
+├── bin/                     # CLI executables (aios-init.js, aios.js)
+├── docs/                    # Documentação
+│   └── stories/             # Development stories (active/, completed/, epics/)
+├── packages/                # Shared packages
+├── pro/                     # Pro submodule (proprietary)
+├── squads/                  # Squad expansions
+└── tests/                   # Testes
 ```
 
 ---
 
 ## Sistema de Agentes
 
-### Ativacao de Agentes
-Use `@agent-name` ou `/AIOS:agents:agent-name`:
+O AIOS possui **26 agentes** organizados em 3 grupos. Disponibilidade varia por IDE.
+
+> **Fonte de verdade de IDE availability:** `.claude/agents/REGISTRY.md`
+
+### Grupo 1 — Core AIOS (multi-IDE via ideSync)
+
+Sincronizados de `.aios-core/development/agents/` para Claude Code, Codex, Gemini, Cursor.
 
 | Agente | Persona | Escopo Principal |
 |--------|---------|------------------|
-| `@dev` | Dex | Implementacao de codigo |
+| `@dev` | Dex | Implementação de código |
 | `@qa` | Quinn | Testes e qualidade |
-| `@architect` | Aria | Arquitetura e design tecnico |
-| `@pm` | Morgan | Product Management, PRDs |
-| `@po` | Pax | Product Owner, backlog |
-| `@sm` | River | Scrum Master, stories |
-| `@analyst` | Atlas | Pesquisa e analise |
-| `@data-engineer` | Dara | Database design, migrations |
+| `@architect` | Aria | Arquitetura e design técnico |
+| `@pm` | Morgan | Product Management, PRD, epics |
+| `@po` | Nova | Product Owner, backlog, stories |
+| `@sm` | River | Scrum Master, sprints, criação de stories |
+| `@analyst` | Alex | Pesquisa, análise de negócios |
+| `@data-engineer` | Dara | Database design, migrations, schema |
 | `@ux-design-expert` | Uma | UX/UI design |
 | `@devops` | Gage | CI/CD, git push (EXCLUSIVO) |
+| `@aios-master` | Pax | Orquestrador geral do framework |
+| `@squad-creator` | — | Criação guiada de squads |
+
+### Grupo 2 — Chiefs de Domínio (Claude Code only)
+
+Agentes de orquestração especializados. Cada Chief coordena um grupo interno de especialistas usando sistema de **Tiers**: Tier 0 (diagnóstico obrigatório) → Tier 1-2 (execução) → validação final. **Nunca commitam ao git.**
+
+| Agente | Domínio | Especialistas internos |
+|--------|---------|----------------------|
+| `@copy-chief` | Copywriting | 24 copywriters (Gary Halbert, Ogilvy, Dan Kennedy, Eugene Schwartz...) |
+| `@story-chief` | Storytelling | 12 storytellers (Joseph Campbell, Blake Snyder, Oren Klaff...) |
+| `@data-chief` | Data Intelligence | Peter Fader (CLV/RFM), Sean Ellis (AARRR), Nick Mehta... |
+| `@design-chief` | Design | Marty Neumeier, Aaron Draplin, Brad Frost, Chris Do... |
+| `@cyber-chief` | Cybersecurity | Georgia Weidman, Peter Kim, Jim Manico, Chris Sanders... |
+| `@legal-chief` | Legal BR + Global | Brad Feld, Ken Adams, especialistas LGPD + tributário BR |
+| `@traffic-masters-chief` | Paid Traffic | Molly Pittman, Depesh Mandalia, Kasim Aslam, Tom Breeze... |
+| `@tools-orchestrator` | Frameworks & Tools | tools-reviewer, tools-creator, tools-extractor, tools-validator |
+| `@design-system` | Design System | Brad Frost (Atomic Design), 36 missões — **bypassPermissions** |
+| `@db-sage` | Database Supabase/Postgres | Autônomo, KISS Gate, 36 missões — **bypassPermissions** |
+
+### Grupo 3 — Orquestração Especializada (Claude Code only)
+
+| Agente | Papel |
+|--------|-------|
+| `@squad` | Orquestrador-mestre de criação de squads (invoca subagentes: oalanicolas, pedro-valerio, sop-extractor) |
+| `@oalanicolas` | Mind Cloning Architect — extrai Voice DNA e Thinking DNA de mentes elite |
+| `@pedro-valerio` | Process Absolutist — valida workflows, audita veto conditions e fluxo unidirecional |
+| `@sop-extractor` | SOP Extraction Specialist — extrai SOPs de conteúdos e entrevistas |
+
+### Agentes com bypassPermissions
+
+> **NOTA:** `@design-system` e `@db-sage` têm `bypassPermissions: true` — operam sem pedir aprovação de tool use ao usuário. Os hooks de governança foram ajustados para funcionar com eles: `@design-system` não toca paths protegidos pelos hooks; `@db-sage` cria plan doc antes da migration (passa `enforce-architecture-first`) e usa `psql -f` em vez de DDL inline (passa `sql-governance`). Ver seção Hooks de Governança para detalhes.
 
 ### Comandos de Agentes
+
 Use prefixo `*` para comandos:
-- `*help` - Mostrar comandos disponiveis
-- `*draft` - Criar story (via @sm)
-- `*develop` - Implementar story (via @dev)
+- `*help` - Mostrar comandos disponíveis
+- `*create-story` - Criar story de desenvolvimento
+- `*task {name}` - Executar task específica
 - `*exit` - Sair do modo agente
 
-### Mapeamento Agente -> Codebase
+### Mapeamento Agente → Codebase
 
-| Agente | Diretorios Principais |
+| Agente | Diretórios Principais |
 |--------|----------------------|
-| `@dev` | `src/`, `packages/` |
+| `@dev` | `packages/`, `.aios-core/core/`, `bin/` |
 | `@architect` | `docs/architecture/`, system design |
-| `@data-engineer` | `supabase/migrations/`, schema design |
-| `@qa` | Tests, quality gates |
-| `@po` | `docs/stories/`, backlog |
-| `@devops` | `.github/`, CI/CD, git push |
+| `@data-engineer` | `packages/db/`, migrations, schema |
+| `@qa` | `tests/`, `*.test.js`, quality gates |
+| `@po` | `docs/stories/`, epics, requirements |
+| `@devops` | `.github/`, CI/CD, git operations |
+| `@db-sage` | `packages/db/`, Supabase schema, RLS, migrations |
+| `@design-system` | `packages/ui/`, componentes, tokens, design system |
+| `@copy-chief` | `docs/copy/`, landing pages, ad copy, email |
+| `@tools-orchestrator` | `.aios-core/data/`, frameworks, mental models |
+| `@squad` | `squads/`, `.aios-core/development/agents/` |
+
+---
+
+## Skills Disponíveis
+
+Skills são workflows especializados invocados via `/skill-name`. Ficam em `.claude/skills/`.
+
+| Skill | Arquivo/Pasta | Uso | Agente Principal |
+|-------|--------------|-----|-----------------|
+| `architect-first` | `skills/architect-first/` | Validação arquitetural pré-implementação | `@architect` |
+| `clone-mind` | `skills/clone-mind.md` | Pipeline 9 camadas para clonar mentes (checkpoint humano L6-L8) | `@oalanicolas` |
+| `enhance-workflow` | `skills/enhance-workflow.md` | Pipeline multi-agente 5 fases com Domain Roundtable (15 domínios) | `@aios-master` |
+| `course-generation-workflow` | `skills/course-generation-workflow.md` | Workflow linear para CreatorOS | `@sm` + `@dev` |
+| `ralph` | `skills/ralph.md` | Autonomous Development Loop — executa stories iterativamente com estado | `@dev` |
+| `brand-book-generator` | `skills/brand-book-generator/` | Template e processo para Brand Books (10 seções) | Agente Scher (squad branding) |
+| `brand-qa-checklist` | `skills/brand-qa-checklist/` | QA por tipo de entrega de marca | Agente Ive (squad branding) |
+| `brand-strategy-brief` | `skills/brand-strategy-brief/` | Brief estratégico de marca (11 seções) | Agente Neumeier (squad branding) |
+| `content-calendar` | `skills/content-calendar/` | Calendário editorial e estratégia de conteúdo | Agente Godin (squad branding) |
+| `copy-frameworks` | `skills/copy-frameworks/` | Biblioteca AIDA, PAS, BAB, 4Ps, templates por canal | `@copy-chief` / Agente Ogilvy |
+| `mcp-builder` | `skills/mcp-builder/` | Construir MCP servers (Node e Python) | `@devops` |
+| `skill-creator` | `skills/skill-creator/` | Criar novas skills com scripts de validação | `@aios-master` |
+| `synapse` | `skills/synapse/` | Context engine — domains, layers, rules, manifest | `@aios-master` |
+
+---
+
+## Pipeline por Tipo de Missão
+
+Escolha o pipeline conforme o tipo de trabalho. Pipelines podem ser combinados.
+
+| Tipo de Missão | Pipeline | Notas |
+|----------------|----------|-------|
+| **Produto / Software** | `@pm` → `@sm` → `@dev` → `@qa` → `@devops` | Pipeline core AIOS. Stories em `docs/stories/` |
+| **Arquitetura** | `@architect` → `@dev` → `@qa` → `@devops` | Usar skill `architect-first` antes de `@dev` |
+| **Database** | `@architect` → `@db-sage` → `@qa` → `@devops` | `@db-sage` substitui `@data-engineer` em missões Supabase complexas |
+| **Design System** | `@ux-design-expert` → `@design-chief` → `@design-system` → `@dev` | `@design-system` entrega componentes; `@dev` consome |
+| **Conteúdo / Copy** | `@pm` → `@copy-chief` → `@story-chief` → revisão `@qa` | Chiefs operam autonomamente; `@qa` valida entrega final |
+| **Tráfego Pago** | `@pm` → `@traffic-masters-chief` → `@copy-chief` → revisão | Strategy first, depois copy executado |
+| **Marca Completa** | Squad `elite-branding-marketing` (pipeline interno próprio) | Ativar pelo squad: Neumeier → Haviv → Scher → Bierut → Ogilvy → Godin |
+| **Clonagem de Mente** | skill `clone-mind` → `@oalanicolas` → `@pedro-valerio` | Checkpoint humano obrigatório nas camadas L6-L8 |
+| **Criação de Squad** | `@squad` (orquestra oalanicolas + pedro-valerio + sop-extractor) | Usar skill `squad` como guia |
+| **Segurança** | `@cyber-chief` → `@dev` (fix) → `@qa` → `@devops` | `@cyber-chief` diagnóstica; `@dev` corrige |
+| **Legal** | `@legal-chief` → validação humana → `@pm` (incorpora no PRD) | Nunca implementar contrato/cláusula sem validação humana |
+| **Autonomous Loop** | skill `ralph` + autoClaude v3.0 (worktrees) | Para execução iterativa de stories sem interrupção |
+
+---
+
+## Squad: Elite Branding & Marketing
+
+Squad `squads/elite-branding-marketing/` v3.0.0 — agência full-service de branding e marketing.
+
+**9 Agentes internos:**
+
+| Persona | Referência | Papel |
+|---------|-----------|-------|
+| Neumeier | Marty Neumeier | Brand Visionary — Deep Discovery, ZAG, Golden Circle |
+| Haviv | Sagi Haviv | Logo e identidade visual |
+| Scher | Paula Scher | Brand Book, sistema visual completo |
+| Bierut | Michael Bierut | Voice Guide, manifesto, tom de voz |
+| Ogilvy | David Ogilvy | Copy de alta conversão e campanhas |
+| Godin | Seth Godin | Estratégia de conteúdo e calendário editorial |
+| Kotler | Philip Kotler | Plano de marketing, KPIs, performance |
+| Bauhaus | — | Produção de assets visuais |
+| Ive | Jony Ive | QA de experiência de marca e auditoria |
+
+**Skills usadas pelo squad:** `brand-strategy-brief`, `brand-book-generator`, `copy-frameworks`, `content-calendar`, `brand-qa-checklist`
 
 ---
 
 ## Story-Driven Development
 
-**TODO desenvolvimento DEVE seguir o workflow AIOS:**
+1. **Trabalhe a partir de stories** - Todo desenvolvimento começa com uma story em `docs/stories/`
+2. **Atualize progresso** - Marque checkboxes conforme completa: `[ ]` → `[x]`
+3. **Rastreie mudanças** - Mantenha a seção File List na story
+4. **Siga critérios** - Implemente exatamente o que os acceptance criteria especificam
 
-1. **@pm** cria PRD/epic -> **@sm** quebra em stories
-2. **@po** valida e prioriza stories
-3. **@dev** implementa seguindo a story
-4. **@data-engineer** valida migrations
-5. **@qa** testa
-6. **@devops** faz push
+### Workflow de Story (Core)
+```
+@po *create-story → @dev implementa → @qa testa → @devops push
+```
 
-### Regras
-- Todo desenvolvimento comeca com uma story em `docs/stories/`
-- Stories seguem formato AIOS (ID, acceptance criteria, dev notes, tasks)
-- Atualize checkboxes conforme completa: `[ ]` -> `[x]`
-- Mantenha a secao File List na story
-- NUNCA implemente sem story aprovada
+### Workflow Autônomo (ralph + autoClaude)
+```
+skill ralph → autoClaude worktree → @dev loop → @qa gate → @devops merge
+```
 
 ---
 
-## Padroes de Codigo
+## Hooks de Governança
 
-### Convencoes de Nomenclatura
+Hooks ativos em `.claude/hooks/`. Executam automaticamente em eventos Claude Code.
 
-| Tipo | Convencao | Exemplo |
+| Hook | Arquivo | O que governa | Agentes afetados |
+|------|---------|--------------|-----------------|
+| Enforce Architecture First | `enforce-architecture-first.py` | Bloqueia Write/Edit em `supabase/functions/` e `supabase/migrations/` sem doc prévia | `@dev`, `@db-sage` |
+| Mind Clone Governance | `mind-clone-governance.py` | Governança do processo de clonagem de mentes | `@oalanicolas`, skill `clone-mind` |
+| Pre-commit Version Check | `pre-commit-version-check.sh` | Valida versão antes de commits | `@devops` |
+| Precompact Session Digest | `precompact-session-digest.js` | Salva digest de sessão antes de compactação | Todos |
+| Read Protection | `read-protection.py` | Protege leitura de arquivos sensíveis | Todos |
+| Slug Validation | `slug-validation.py` | Valida slugs de agentes/squads | `@squad`, `@squad-creator` |
+| SQL Governance | `sql-governance.py` | Bloqueia DDL inline via Bash; permite file-based (`psql -f`) e supabase CLI | `@db-sage` |
+| Synapse Engine | `synapse-engine.js` | Motor do sistema Synapse de injeção de contexto | Todos |
+| Write Path Validation | `write-path-validation.py` | Valida caminhos de escrita | Todos |
+
+**Status de conflitos (resolvido):**
+- `@design-system` — sem conflito real: escreve em `packages/ui/`, tokens, Tailwind. Não toca `supabase/` nem roda SQL.
+- `@db-sage` — resolvido via dois mecanismos:
+  1. `sql-governance.py` expandido para permitir `psql -f` (file-based). DDL inline ainda bloqueado.
+  2. `db-sage` Section 5 atualizada: obriga criar `docs/approved-plans/migration-{name}.md` ANTES de criar `supabase/migrations/{name}.sql`. `enforce-architecture-first.py` passa naturalmente.
+
+---
+
+## Padrões de Código
+
+### Convenções de Nomenclatura
+
+| Tipo | Convenção | Exemplo |
 |------|-----------|---------|
-| Componentes | PascalCase | `EditOfficeDataSheet` |
-| Hooks | prefixo `use` | `useTenantContext` |
-| Arquivos | kebab-case | `edit-office-data-sheet.tsx` |
-| Constantes | SCREAMING_SNAKE_CASE | `BATCH_SIZE` |
-| Interfaces | PascalCase + sufixo | `AlertsPageProps` |
+| Componentes | PascalCase | `WorkflowList` |
+| Hooks | prefixo `use` | `useWorkflowOperations` |
+| Arquivos | kebab-case | `workflow-list.tsx` |
+| Constantes | SCREAMING_SNAKE_CASE | `MAX_RETRIES` |
+| Interfaces | PascalCase + sufixo | `WorkflowListProps` |
 
 ### Imports
-**Sempre use imports absolutos com `@/`.**
+**Sempre use imports absolutos.** Nunca use imports relativos.
 ```typescript
-// Correto
-import { createServiceClient } from '@/lib/supabase/service'
+// ✓ Correto
+import { useStore } from '@/stores/feature/store'
 
-// Errado
-import { createServiceClient } from '../../../lib/supabase/service'
+// ✗ Errado
+import { useStore } from '../../../stores/feature/store'
 ```
 
 **Ordem de imports:**
-1. React/Next.js
-2. External libraries (stripe, zod, date-fns)
-3. UI components (@/components/ui)
-4. Lib utilities (@/lib)
-5. Feature imports (@/features)
+1. React/core libraries
+2. External libraries
+3. UI components
+4. Utilities
+5. Stores
+6. Feature imports
+7. CSS imports
 
 ### TypeScript
 - Sem `any` - Use tipos apropriados ou `unknown` com type guards
 - Sempre defina interface de props para componentes
 - Use `as const` para objetos/arrays constantes
+- Tipos de ref explícitos: `useRef<HTMLDivElement>(null)`
 
-### Error Handling (API Routes)
+### Error Handling
 ```typescript
 try {
   // Operation
-} catch (err) {
-  const msg = err instanceof Error ? err.message : 'Unknown error'
-  console.error(`[endpoint] Error: ${msg}`)
-  return NextResponse.json({ error: msg }, { status: 500 })
+} catch (error) {
+  logger.error(`Failed to ${operation}`, { error })
+  throw new Error(`Failed to ${operation}: ${error instanceof Error ? error.message : 'Unknown'}`)
 }
 ```
-
----
-
-## Database
-
-### Convencoes SQL
-- Tabelas: snake_case plural (`monitored_cases`, `tenant_members`)
-- Colunas: snake_case (`stripe_customer_id`, `last_checked_at`)
-- Constraints: prefixo descritivo (`chk_`, `uq_`, `fk_`)
-- Indexes: `idx_{table}_{columns}`
-- RLS habilitado em TODAS as tabelas
-- Migrations numeradas: `001_`, `002_`, `003_`, `004_`
-
-### Tabelas Principais
-| Tabela | Descricao |
-|--------|-----------|
-| `tenants` | Escritorios (multi-tenant root) |
-| `tenant_members` | Membros do escritorio |
-| `profiles` | Perfis de usuario (Supabase Auth) |
-| `monitored_cases` | Processos judiciais (64+ colunas) |
-| `case_movements` | Movimentacoes processuais |
-| `clients` | Clientes do escritorio |
-| `alerts` | Alertas de movimentacao |
-| `subscriptions` | Assinaturas Stripe |
-| `plan_limits` | Limites por plano |
-| `webhook_endpoints` | Endpoints de webhook do tenant |
-| `webhook_deliveries` | Historico de entregas |
-| `monitoring_jobs` | Auditoria do cron de monitoramento |
-
-### IMPORTANTE: Validacao de Migrations
-**Toda migration DEVE ser validada pelo `@data-engineer` antes de ser aplicada.**
 
 ---
 
@@ -228,73 +333,128 @@ try {
 ### Comandos de Teste
 ```bash
 npm test                    # Rodar testes
+npm run test:coverage       # Testes com cobertura
 npm run lint                # ESLint
-npm run typecheck           # TypeScript (--skipLibCheck)
+npm run typecheck           # TypeScript
 ```
 
 ### Quality Gates (Pre-Push)
 Antes de push, todos os checks devem passar:
 ```bash
-npm run lint
-npx tsc --noEmit --skipLibCheck
-npm test
+npm run lint        # ESLint
+npm run typecheck   # TypeScript
+npm test            # Jest
 ```
 
 ---
 
-## Convencoes Git
+## Convenções Git
 
 ### Commits
-Seguir Conventional Commits + referenciar Story ID:
-- `feat: implement webhook dispatcher [LITIX-5.2]`
-- `fix: correct plan cache invalidation [LITIX-12.3]`
+Seguir Conventional Commits:
+- `feat:` - Nova funcionalidade
+- `fix:` - Correção de bug
+- `docs:` - Documentação
+- `test:` - Testes
+- `chore:` - Manutenção
+- `refactor:` - Refatoração
+
+**Referencie story ID:** `feat: implement feature [Story 2.1]`
 
 ### Branches
 - `main` - Branch principal
-- `feat/LITIX-X.Y-descricao` - Features
-- `fix/LITIX-X.Y-descricao` - Correcoes
+- `feat/*` - Features
+- `fix/*` - Correções
+- `docs/*` - Documentação
 
 ### Push Authority
 **Apenas `@devops` pode fazer push para remote.**
 
 ---
 
-## API Patterns
-
-### Route Handler Pattern
-```typescript
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/service'
-import { getTenantContext } from '@/lib/auth'
-
-export async function POST(req: NextRequest) {
-  const ctx = await getTenantContext()
-  if (!ctx.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const supabase = createServiceClient()
-  // ... business logic
-}
-```
-
-### Cron Endpoint Pattern
-- Secured via `CRON_SECRET` Bearer token
-- Defined in `vercel.json`
-- Exports both POST and GET
-
----
-
-## Otimizacao Claude Code
+## Otimização Claude Code
 
 ### Uso de Ferramentas
-| Tarefa | Use | Nao Use |
+| Tarefa | Use | Não Use |
 |--------|-----|---------|
-| Buscar conteudo | `Grep` tool | `grep`/`rg` no bash |
+| Buscar conteúdo | `Grep` tool | `grep`/`rg` no bash |
 | Ler arquivos | `Read` tool | `cat`/`head`/`tail` |
 | Editar arquivos | `Edit` tool | `sed`/`awk` |
 | Buscar arquivos | `Glob` tool | `find` |
-| Operacoes complexas | `Task` tool | Multiplos comandos manuais |
+| Operações complexas | `Task` tool | Múltiplos comandos manuais |
+
+### Performance
+- Prefira chamadas de ferramentas em batch
+- Use execução paralela para operações independentes
+- Cache dados frequentemente acessados durante a sessão
+
+### Gerenciamento de Sessão
+- Rastreie progresso da story durante a sessão
+- Atualize checkboxes imediatamente após completar tasks
+- Mantenha contexto da story atual sendo trabalhada
+- Salve estado importante antes de operações longas
+
+### Recuperação de Erros
+- Sempre forneça sugestões de recuperação para falhas
+- Inclua contexto do erro em mensagens ao usuário
+- Sugira procedimentos de rollback quando apropriado
+- Documente quaisquer correções manuais necessárias
 
 ---
 
-*Litix SaaS - AIOS-Powered Development*
-*Story-Driven | Agent-Orchestrated | Quality-First*
+## Comandos Frequentes
+
+### Desenvolvimento
+```bash
+npm run dev                 # Iniciar desenvolvimento
+npm test                    # Rodar testes
+npm run lint                # Verificar estilo
+npm run typecheck           # Verificar tipos
+npm run build               # Build produção
+```
+
+### AIOS
+```bash
+npx aios-core install       # Instalar AIOS
+npx aios-core doctor        # Diagnóstico do sistema
+npx aios-core info          # Informações do sistema
+```
+
+### Sync de Agentes
+```bash
+npm run sync:ide:claude     # Sincronizar agentes Core para Claude Code
+npm run sync:ide:codex      # Sincronizar agentes Core para Codex CLI
+npm run sync:ide:gemini     # Sincronizar agentes Core para Gemini CLI
+npm run validate:parity     # Verificar paridade multi-IDE
+```
+
+---
+
+## MCP Usage
+
+Ver `.claude/rules/mcp-usage.md` para regras detalhadas.
+
+**Resumo:**
+- Preferir ferramentas nativas do Claude Code sobre MCP
+- MCP Docker Gateway apenas quando explicitamente necessário
+- `@devops` gerencia toda infraestrutura MCP
+
+---
+
+## Debug
+
+### Habilitar Debug
+```bash
+export AIOS_DEBUG=true
+```
+
+### Logs
+```bash
+tail -f .aios/logs/agent.log
+```
+
+---
+
+*Synkra AIOS Claude Code Configuration v4.3*
+*CLI First | Observability Second | UI Third*
+*26 agentes | 14 skills | 1 squad | 10 hooks*
