@@ -15,9 +15,11 @@ import {
   FileText,
   Hash,
   StickyNote,
+  Search,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { DocumentSearchForm } from '@/features/cases/components/document-search-form'
 
 export const dynamic = 'force-dynamic'
 
@@ -173,8 +175,28 @@ export default async function ClientDetailPage(props: {
           </div>
         </div>
 
-        {/* Linked processes */}
-        <div className="space-y-3">
+        {/* Search + Linked processes */}
+        <div className="space-y-5">
+          {/* Document search */}
+          {client.documento && (
+            <div className="rounded-lg border bg-card p-5 space-y-3">
+              <h2 className="font-semibold text-sm flex items-center gap-2">
+                <Search size={14} />
+                Buscar processos
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Busque todos os processos onde {client.name} aparece como parte.
+              </p>
+              <DocumentSearchForm
+                plan={ctx.plan ?? 'free'}
+                clientId={client.id}
+                clientName={client.name}
+              />
+            </div>
+          )}
+
+          {/* Linked processes */}
+          <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-sm flex items-center gap-2">
               <FileText size={14} />
@@ -194,7 +216,7 @@ export default async function ClientDetailPage(props: {
               <FileText size={28} className="mx-auto text-muted-foreground/30 mb-2" />
               <p className="text-sm text-muted-foreground">Nenhum processo vinculado.</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Abra um processo e associe este cliente no campo "Dados do escritório".
+                Abra um processo e associe este cliente no campo &ldquo;Dados do escritório&rdquo;.
               </p>
             </div>
           ) : (
@@ -237,6 +259,7 @@ export default async function ClientDetailPage(props: {
               ))}
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>

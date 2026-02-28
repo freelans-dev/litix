@@ -5,7 +5,8 @@ import { getTenantContext } from '@/lib/auth'
 import { checkPlanLimit } from '@/lib/plan-limits'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { isValidCNJ } from '@/lib/crypto'
-import { fetchCaseFromJudit, buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
+import { buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
+import { fetchCase } from '@/lib/case-fetch'
 import { dispatchWebhooks } from '@/lib/webhook-dispatcher'
 import { z } from 'zod'
 
@@ -114,27 +115,27 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Fetch process data from Judit in background and update the record
-  fetchCaseFromJudit(digits).then(async (juditData) => {
-    if (!juditData) return
+  // Fetch process data via cascade (DataJud free → Judit paid) in background
+  fetchCase(digits, { tenantId: ctx.tenantId, sourceFlow: 'case_register' }).then(async (result) => {
+    if (!result) return
     const svc = createServiceClient()
 
-    const updatePayload = buildCaseUpdateFromJudit(juditData, tribunal)
+    const updatePayload = buildCaseUpdateFromJudit(result.data, tribunal)
     await svc
       .from('monitored_cases')
-      .update(updatePayload)
+      .update({ ...updatePayload, merged_from: result.providers })
       .eq('id', data.id)
 
     // Save movements to case_movements
-    if (juditData.movimentos && juditData.movimentos.length > 0) {
-      const movements = juditData.movimentos.map((m) => ({
+    if (result.data.movimentos && result.data.movimentos.length > 0) {
+      const movements = result.data.movimentos.map((m) => ({
         tenant_id: ctx.tenantId,
         case_id: data.id,
         movement_date: m.data,
         description: m.descricao,
         type: m.tipo ?? null,
         code: m.codigo ?? null,
-        provider: 'judit',
+        provider: result.data.provider,
       }))
       await svc.from('case_movements').upsert(movements, {
         onConflict: 'case_id,movement_date,description',

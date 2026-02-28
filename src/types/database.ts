@@ -723,6 +723,63 @@ export interface Database {
         }
         Relationships: []
       }
+      document_searches: {
+        Row: {
+          id: string
+          tenant_id: string
+          member_id: string
+          document_type: string
+          document_value: string
+          client_id: string | null
+          status: string
+          trigger_id: string | null
+          cases_found: number
+          cases_imported: number
+          cases_deduplicated: number
+          providers_used: string[] | null
+          error: string | null
+          started_at: string | null
+          completed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          member_id: string
+          document_type: string
+          document_value: string
+          client_id?: string | null
+          status?: string
+          trigger_id?: string | null
+          cases_found?: number
+          cases_imported?: number
+          cases_deduplicated?: number
+          providers_used?: string[] | null
+          error?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          member_id?: string
+          document_type?: string
+          document_value?: string
+          client_id?: string | null
+          status?: string
+          trigger_id?: string | null
+          cases_found?: number
+          cases_imported?: number
+          cases_deduplicated?: number
+          providers_used?: string[] | null
+          error?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       monitoring_jobs: {
         Row: {
           id: string
@@ -785,6 +842,57 @@ export interface Database {
           case_id?: string
           tenant_id?: string
           member_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      provider_queries: {
+        Row: {
+          id: string
+          tenant_id: string | null
+          provider: string
+          search_type: string
+          search_key: string
+          tribunal: string | null
+          status: string
+          duration_ms: number | null
+          completeness_score: number | null
+          fields_returned: number | null
+          cost_estimate_brl: number
+          error: string | null
+          source_flow: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id?: string | null
+          provider: string
+          search_type?: string
+          search_key: string
+          tribunal?: string | null
+          status?: string
+          duration_ms?: number | null
+          completeness_score?: number | null
+          fields_returned?: number | null
+          cost_estimate_brl?: number
+          error?: string | null
+          source_flow?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string | null
+          provider?: string
+          search_type?: string
+          search_key?: string
+          tribunal?: string | null
+          status?: string
+          duration_ms?: number | null
+          completeness_score?: number | null
+          fields_returned?: number | null
+          cost_estimate_brl?: number
+          error?: string | null
+          source_flow?: string | null
           created_at?: string
         }
         Relationships: []

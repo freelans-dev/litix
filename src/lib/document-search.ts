@@ -1,11 +1,12 @@
 /**
- * OAB Import Job — searches Judit by OAB number and imports all found processes.
+ * Document Search Job — searches Judit by CPF or CNPJ and imports all found processes.
  *
  * Flow:
- * 1. Create Judit request with search_type: 'oab'
+ * 1. Create Judit request with search_type: 'cpf' or 'cnpj'
  * 2. Poll until completed (up to ~120s)
  * 3. Paginate through responses, dedup against existing cases, import new ones
- * 4. Update oab_imports progress as it goes
+ * 4. Update document_searches progress as it goes
+ * 5. If client_id provided, link imported cases to the client
  */
 
 import { createServiceClient } from '@/lib/supabase/service'
@@ -21,37 +22,35 @@ interface JuditResponsePage {
   all_count: number
 }
 
-export async function runOabImport(importId: string): Promise<void> {
+export async function runDocumentSearch(searchId: string): Promise<void> {
   const supabase = createServiceClient()
 
-  const { data: importRec } = await supabase
-    .from('oab_imports')
+  const { data: searchRec } = await supabase
+    .from('document_searches')
     .select('*')
-    .eq('id', importId)
+    .eq('id', searchId)
     .single()
 
-  if (!importRec) {
-    console.error(`[oab-import] Import ${importId} not found`)
+  if (!searchRec) {
+    console.error(`[document-search] Search ${searchId} not found`)
     return
   }
 
   await supabase
-    .from('oab_imports')
+    .from('document_searches')
     .update({ status: 'running', started_at: new Date().toISOString() })
-    .eq('id', importId)
+    .eq('id', searchId)
 
   try {
-    const searchKey = `${importRec.oab_number}/${importRec.oab_uf}`
-
-    // 1. Create Judit request for OAB search
+    // 1. Create Judit request for CPF/CNPJ search
     const juditStartMs = Date.now()
     const createRes = await fetch(`${REQUESTS_URL}/requests`, {
       method: 'POST',
       headers: { 'api-key': JUDIT_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         search: {
-          search_type: 'oab',
-          search_key: searchKey,
+          search_type: searchRec.document_type,
+          search_key: searchRec.document_value,
           response_type: 'lawsuit',
           cache_ttl_in_days: 1,
         },
@@ -59,22 +58,22 @@ export async function runOabImport(importId: string): Promise<void> {
     })
 
     if (!createRes.ok) {
-      await failImport(supabase, importId, `Judit request failed: ${createRes.status}`)
+      await failSearch(supabase, searchId, `Judit request failed: ${createRes.status}`)
       return
     }
 
     const { request_id: requestId } = await createRes.json() as { request_id: string }
     if (!requestId) {
-      await failImport(supabase, importId, 'No request_id returned from Judit')
+      await failSearch(supabase, searchId, 'No request_id returned from Judit')
       return
     }
 
     await supabase
-      .from('oab_imports')
+      .from('document_searches')
       .update({ trigger_id: requestId })
-      .eq('id', importId)
+      .eq('id', searchId)
 
-    // 2. Poll until completed — OAB searches take longer (up to 120s)
+    // 2. Poll until completed — CPF/CNPJ searches take longer (up to 120s)
     let completed = false
     for (let i = 0; i < 12; i++) {
       await sleep(10_000)
@@ -86,7 +85,7 @@ export async function runOabImport(importId: string): Promise<void> {
 
       const { status } = await statusRes.json() as { status: string }
       if (status === 'failed' || status === 'cancelled') {
-        await failImport(supabase, importId, `Judit request ${status}`)
+        await failSearch(supabase, searchId, `Judit request ${status}`)
         return
       }
       if (status === 'completed') {
@@ -96,7 +95,7 @@ export async function runOabImport(importId: string): Promise<void> {
     }
 
     if (!completed) {
-      await failImport(supabase, importId, 'Judit request timed out after 120s')
+      await failSearch(supabase, searchId, 'Judit request timed out after 120s')
       return
     }
 
@@ -104,7 +103,7 @@ export async function runOabImport(importId: string): Promise<void> {
     const { data: existingCases } = await supabase
       .from('monitored_cases')
       .select('cnj')
-      .eq('tenant_id', importRec.tenant_id)
+      .eq('tenant_id', searchRec.tenant_id)
 
     const existingCnjs = new Set(existingCases?.map(c => c.cnj) ?? [])
 
@@ -150,10 +149,11 @@ export async function runOabImport(importId: string): Promise<void> {
         const { data: inserted, error: insertErr } = await supabase
           .from('monitored_cases')
           .insert({
-            tenant_id: importRec.tenant_id,
+            tenant_id: searchRec.tenant_id,
             cnj,
-            import_source: 'oab_import',
+            import_source: 'document_search',
             monitor_enabled: true,
+            client_id: searchRec.client_id ?? null,
             ...caseUpdate,
           })
           .select('id')
@@ -173,7 +173,7 @@ export async function runOabImport(importId: string): Promise<void> {
         // Save movements
         if (inserted && juditData.movimentos && juditData.movimentos.length > 0) {
           const movements = juditData.movimentos.map(m => ({
-            tenant_id: importRec.tenant_id,
+            tenant_id: searchRec.tenant_id,
             case_id: inserted.id,
             movement_date: m.data,
             description: m.descricao,
@@ -190,32 +190,32 @@ export async function runOabImport(importId: string): Promise<void> {
 
       // Update progress after each page
       await supabase
-        .from('oab_imports')
+        .from('document_searches')
         .update({
           cases_found: casesFound,
           cases_imported: casesImported,
           cases_deduplicated: casesDeduplicated,
         })
-        .eq('id', importId)
+        .eq('id', searchId)
 
       page++
     } while (page <= totalPages)
 
     // Track Judit query for analytics
     trackProviderQuery({
-      tenant_id: importRec.tenant_id,
+      tenant_id: searchRec.tenant_id,
       provider: 'judit',
-      search_type: 'oab',
-      search_key: searchKey,
+      search_type: searchRec.document_type as 'cpf' | 'cnpj',
+      search_key: searchRec.document_value,
       status: 'success',
       duration_ms: Date.now() - juditStartMs,
       fields_returned: casesFound,
-      source_flow: 'oab_import',
+      source_flow: 'document_search',
     })
 
     // 5. Mark completed
     await supabase
-      .from('oab_imports')
+      .from('document_searches')
       .update({
         status: 'completed',
         cases_found: casesFound,
@@ -224,31 +224,31 @@ export async function runOabImport(importId: string): Promise<void> {
         providers_used: ['judit'],
         completed_at: new Date().toISOString(),
       })
-      .eq('id', importId)
+      .eq('id', searchId)
 
     console.log(
-      `[oab-import] ${importId} completed: found=${casesFound} imported=${casesImported} dedup=${casesDeduplicated}`
+      `[document-search] ${searchId} completed: found=${casesFound} imported=${casesImported} dedup=${casesDeduplicated}`
     )
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
-    await failImport(supabase, importId, msg)
-    console.error(`[oab-import] ${importId} failed: ${msg}`)
+    await failSearch(supabase, searchId, msg)
+    console.error(`[document-search] ${searchId} failed: ${msg}`)
   }
 }
 
-async function failImport(
+async function failSearch(
   supabase: ReturnType<typeof createServiceClient>,
-  importId: string,
+  searchId: string,
   error: string,
 ) {
   await supabase
-    .from('oab_imports')
+    .from('document_searches')
     .update({
       status: 'failed',
       error,
       completed_at: new Date().toISOString(),
     })
-    .eq('id', importId)
+    .eq('id', searchId)
 }
 
 function sleep(ms: number) {

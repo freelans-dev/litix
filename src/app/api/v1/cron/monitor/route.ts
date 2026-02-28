@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { fetchCaseFromJudit, buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
+import { buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
+import { fetchCase } from '@/lib/case-fetch'
 import { generateAlerts } from '@/lib/alert-generator'
 import { dispatchWebhooks } from '@/lib/webhook-dispatcher'
 
@@ -84,10 +85,13 @@ export async function POST(req: NextRequest) {
     })
 
     try {
-      // Fetch from Judit
-      const juditData = await fetchCaseFromJudit(caseRow.cnj)
+      // Fetch via cascade: DataJud (free) → Judit (paid)
+      const result = await fetchCase(caseRow.cnj, {
+        tenantId: caseRow.tenant_id,
+        sourceFlow: 'cron_monitor',
+      })
 
-      if (!juditData) {
+      if (!result) {
         // No data returned — just update last_checked_at
         await supabase
           .from('monitored_cases')
@@ -98,7 +102,7 @@ export async function POST(req: NextRequest) {
           .from('monitoring_jobs')
           .update({
             status: 'no_change',
-            provider_used: 'judit',
+            provider_used: 'datajud,judit',
             duration_ms: Date.now() - jobStartMs,
             completed_at: new Date().toISOString(),
           })
@@ -108,27 +112,31 @@ export async function POST(req: NextRequest) {
         continue
       }
 
-      // Update case fields from Judit
-      const updatePayload = buildCaseUpdateFromJudit(juditData)
+      // Update case fields from cascade result
+      const updatePayload = buildCaseUpdateFromJudit(result.data)
       await supabase
         .from('monitored_cases')
-        .update({ ...updatePayload, last_checked_at: new Date().toISOString() })
+        .update({
+          ...updatePayload,
+          merged_from: result.providers,
+          last_checked_at: new Date().toISOString(),
+        })
         .eq('id', caseRow.id)
 
       // Insert new movements (upsert ignores duplicates)
       let newMovementCount = 0
-      if (juditData.movimentos && juditData.movimentos.length > 0) {
-        const movements = juditData.movimentos.map((m) => ({
+      if (result.data.movimentos && result.data.movimentos.length > 0) {
+        const movements = result.data.movimentos.map((m) => ({
           tenant_id: caseRow.tenant_id,
           case_id: caseRow.id,
           movement_date: m.data,
           description: m.descricao,
           type: m.tipo ?? null,
           code: m.codigo ?? null,
-          provider: 'judit',
+          provider: result.data.provider,
         }))
 
-        const { data: inserted } = await supabase
+        await supabase
           .from('case_movements')
           .upsert(movements, {
             onConflict: 'case_id,movement_date,description',
@@ -182,7 +190,7 @@ export async function POST(req: NextRequest) {
         .from('monitoring_jobs')
         .update({
           status: newMovementCount > 0 ? 'completed' : 'no_change',
-          provider_used: 'judit',
+          provider_used: result.providers.join(','),
           movements_found: newMovementCount,
           duration_ms: Date.now() - jobStartMs,
           completed_at: new Date().toISOString(),

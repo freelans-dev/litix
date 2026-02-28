@@ -167,11 +167,35 @@ export default async function CaseDetailPage(props: {
             style={{ width: `${Math.min(completeness, 100)}%` }}
           />
         </div>
-        {caseData.dias_sem_mov != null && caseData.dias_sem_mov > 0 && (
-          <p className="text-xs text-muted-foreground mt-2">
-            {caseData.dias_sem_mov} dias sem movimentacao
-          </p>
-        )}
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
+          {caseData.dias_sem_mov != null && caseData.dias_sem_mov > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {caseData.dias_sem_mov} dias sem movimentacao
+            </span>
+          )}
+          {caseData.merged_from && Array.isArray(caseData.merged_from) && caseData.merged_from.length > 0 && (
+            <>
+              {caseData.dias_sem_mov != null && caseData.dias_sem_mov > 0 && (
+                <span className="text-xs text-muted-foreground">·</span>
+              )}
+              <span className="text-xs text-muted-foreground">Fontes:</span>
+              {(caseData.merged_from as string[]).map((provider: string) => (
+                <Badge
+                  key={provider}
+                  variant="outline"
+                  className={`text-xs px-1.5 py-0 ${
+                    provider === 'datajud' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' :
+                    provider === 'judit' ? 'bg-blue-500/10 text-blue-600 border-blue-500/30' :
+                    provider === 'codilo' ? 'bg-purple-500/10 text-purple-600 border-purple-500/30' :
+                    ''
+                  }`}
+                >
+                  {provider.charAt(0).toUpperCase() + provider.slice(1)}
+                </Badge>
+              ))}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Dados processuais */}
