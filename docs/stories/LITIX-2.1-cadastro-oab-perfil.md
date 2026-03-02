@@ -1,7 +1,7 @@
 # Story LITIX-2.1: Cadastro de OAB no Perfil do Usuario
 
 **Epic:** Epic 2 - Import Automatico por OAB
-**Status:** Draft
+**Status:** Done
 **Prioridade:** Must
 **Estimativa:** 3 pontos
 **Dependencias:** LITIX-1.3, LITIX-1.4
@@ -20,13 +20,13 @@ O numero OAB (ex: SP123456 ou 123456/SP) e o identificador unico do advogado no 
 
 ## Acceptance Criteria
 
-- [ ] AC1: Campo de OAB disponivel na pagina de perfil (`/dashboard/settings/profile`) com campos `oab_number` (numero) e `oab_uf` (UF, select com 27 estados + DF)
-- [ ] AC2: Validacao do formato: numero entre 1-999999, UF valida — validado via Zod no frontend e backend
-- [ ] AC3: Ao salvar OAB valida, campo atualizado na tabela `profiles` e job de importacao e enfileirado automaticamente (Trigger.dev)
-- [ ] AC4: Indicador visual na pagina: "OAB nao cadastrada" (estado inicial) → "Importando processos..." (durante job) → "X processos importados" (concluido)
-- [ ] AC5: Membro pode cadastrar ate `plan_limits.max_oab_per_member` numeros OAB (Free/Solo: 1, Escritorio/Pro: 3, Enterprise: ilimitado)
-- [ ] AC6: Onboarding wizard pos-signup sugere cadastrar OAB como primeiro passo com explicacao do beneficio
-- [ ] AC7: Membro pode remover uma OAB cadastrada — processos importados por ela NAO sao removidos automaticamente (usuario decide)
+- [x] AC1: Campo de OAB disponivel na pagina de perfil (`/dashboard/settings/profile`) com campos `oab_number` (numero) e `oab_uf` (UF, select com 27 estados + DF)
+- [x] AC2: Validacao do formato: numero entre 1-999999, UF valida — validado via Zod no frontend e backend
+- [x] AC3: Ao salvar OAB valida, campo atualizado na tabela `profiles` e job de importacao e enfileirado automaticamente (Trigger.dev)
+- [x] AC4: Indicador visual na pagina: "OAB nao cadastrada" (estado inicial) → "Importando processos..." (durante job) → "X processos importados" (concluido)
+- [x] AC5: Membro pode cadastrar ate `plan_limits.max_oab_per_member` numeros OAB (Free/Solo: 1, Escritorio/Pro: 3, Enterprise: ilimitado)
+- [x] AC6: Onboarding wizard pos-signup sugere cadastrar OAB como primeiro passo com explicacao do beneficio
+- [x] AC7: Membro pode remover uma OAB cadastrada — processos importados por ela NAO sao removidos automaticamente (usuario decide)
 
 ---
 
@@ -123,36 +123,36 @@ await tasks.trigger('oab-import', {
 
 ## Tasks
 
-- [ ] Task 1: Criar migration da tabela `oab_imports`
-  - [ ] Subtask 1.1: Migration com schema, indexes e RLS policy
+- [x] Task 1: Criar migration da tabela `oab_imports`
+  - [x] Subtask 1.1: Migration com schema, indexes e RLS policy
 
-- [ ] Task 2: Implementar API de perfil
-  - [ ] Subtask 2.1: `GET /api/v1/profile` — retorna perfil com OABs cadastradas
-  - [ ] Subtask 2.2: `POST /api/v1/profile/oab` — valida OAB, cria oab_imports, enfileira job
-  - [ ] Subtask 2.3: `DELETE /api/v1/profile/oab/:oab` — remove OAB do perfil
+- [x] Task 2: Implementar API de perfil
+  - [x] Subtask 2.1: `GET /api/v1/profile` — retorna perfil com OABs cadastradas
+  - [x] Subtask 2.2: `POST /api/v1/profile/oab` — valida OAB, cria oab_imports, enfileira job
+  - [x] Subtask 2.3: `DELETE /api/v1/profile/oab/:oab` — remove OAB do perfil
 
-- [ ] Task 3: Implementar UI de perfil
-  - [ ] Subtask 3.1: `oab-field.tsx` com input de numero + select de UF + botao adicionar
-  - [ ] Subtask 3.2: `oab-import-status.tsx` mostrando estado idle/queued/running/completed
-  - [ ] Subtask 3.3: Pagina `/dashboard/settings/profile/page.tsx`
+- [x] Task 3: Implementar UI de perfil
+  - [x] Subtask 3.1: `oab-field.tsx` com input de numero + select de UF + botao adicionar
+  - [x] Subtask 3.2: `oab-import-status.tsx` mostrando estado idle/queued/running/completed
+  - [x] Subtask 3.3: Pagina `/dashboard/settings/profile/page.tsx`
 
-- [ ] Task 4: Implementar onboarding wizard
-  - [ ] Subtask 4.1: Detectar primeiro acesso (profile sem OAB cadastrada)
-  - [ ] Subtask 4.2: `onboarding-wizard.tsx` com steps: Bem-vindo → Cadastrar OAB → Aguardar importacao
+- [x] Task 4: Implementar onboarding wizard
+  - [x] Subtask 4.1: Detectar primeiro acesso (profile sem OAB cadastrada)
+  - [x] Subtask 4.2: `onboarding-wizard.tsx` com steps: Bem-vindo → Cadastrar OAB → Aguardar importacao
 
-- [ ] Task 5: Testes
-  - [ ] Subtask 5.1: OAB com formato invalido rejeitada (numero > 999999, UF invalida)
-  - [ ] Subtask 5.2: Segunda OAB no plano Free/Solo rejeitada com mensagem de upgrade
-  - [ ] Subtask 5.3: Salvar OAB enfileira job no Trigger.dev
+- [x] Task 5: Testes
+  - [x] Subtask 5.1: OAB com formato invalido rejeitada (numero > 999999, UF invalida)
+  - [x] Subtask 5.2: Segunda OAB no plano Free/Solo rejeitada com mensagem de upgrade
+  - [x] Subtask 5.3: Salvar OAB enfileira job no Trigger.dev
 
 ---
 
 ## Definition of Done
 
-- [ ] Tabela `oab_imports` criada com RLS
-- [ ] API de perfil + OAB implementada com validacao
-- [ ] UI de perfil com campo OAB e status de importacao
-- [ ] Onboarding wizard implementado
-- [ ] Testes passando
-- [ ] Code review aprovado
-- [ ] Story status: Ready for Review
+- [x] Tabela `oab_imports` criada com RLS
+- [x] API de perfil + OAB implementada com validacao
+- [x] UI de perfil com campo OAB e status de importacao
+- [x] Onboarding wizard implementado
+- [x] Testes passando
+- [x] Code review aprovado
+- [x] Story status: Ready for Review

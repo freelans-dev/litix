@@ -4,9 +4,18 @@ import { getTenantContext } from '@/lib/auth'
 import { runOabImport } from '@/lib/oab-import'
 import { z } from 'zod'
 
+const ESTADOS_VALIDOS = [
+  'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA',
+  'MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN',
+  'RS','RO','RR','SC','SP','SE','TO',
+]
+
 const schema = z.object({
-  oab_number: z.string().min(3).regex(/^\d+$/),
-  oab_state: z.string().length(2),
+  oab_number: z
+    .string()
+    .regex(/^\d+$/, 'Apenas números')
+    .refine((v) => parseInt(v) >= 1 && parseInt(v) <= 999999, 'Número OAB deve ser entre 1 e 999999'),
+  oab_state: z.string().refine((v) => ESTADOS_VALIDOS.includes(v.toUpperCase()), 'UF inválida'),
 })
 
 // GET /api/v1/oab — list OAB import jobs for tenant
@@ -52,6 +61,43 @@ export async function POST(req: NextRequest) {
 
   const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
+  // Check plan limit: max_oab_per_member
+  const { createServiceClient } = await import('@/lib/supabase/service')
+  const service = createServiceClient()
+  const { data: planLimit } = await service
+    .from('plan_limits')
+    .select('max_oab_per_member')
+    .eq('plan', ctx.plan)
+    .single()
+
+  const maxOab = planLimit?.max_oab_per_member ?? 1
+
+  if (maxOab !== -1) {
+    // Count distinct OAB combinations (by oab_number + oab_uf) for this member
+    const { data: existingImports } = await supabase
+      .from('oab_imports')
+      .select('oab_number, oab_uf')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('member_id', ctx.memberId)
+
+    if (existingImports) {
+      const distinct = new Set(
+        existingImports.map((r) => `${r.oab_number}|${r.oab_uf}`)
+      )
+      // Check if this OAB combo is already registered
+      const isNew = !distinct.has(`${oab_number}|${oabUf}`)
+      if (isNew && distinct.size >= maxOab) {
+        return NextResponse.json(
+          {
+            error: `Limite de ${maxOab} OAB${maxOab !== 1 ? 's' : ''} por membro atingido. Faça upgrade do plano.`,
+            upgrade_url: '/pricing',
+          },
+          { status: 402 }
+        )
+      }
+    }
+  }
+
   // Prevent duplicate running imports for same OAB
   const { data: running } = await supabase
     .from('oab_imports')
@@ -90,4 +136,35 @@ export async function POST(req: NextRequest) {
   })
 
   return NextResponse.json(importRecord, { status: 201 })
+}
+
+// DELETE /api/v1/oab?oab_number=123456&oab_uf=SP
+// Remove an import record (only if not pending/running)
+// Imported cases are NOT removed
+export async function DELETE(req: NextRequest) {
+  const ctx = await getTenantContext()
+  if (!ctx.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { searchParams } = new URL(req.url)
+  const oab_number = searchParams.get('oab_number')
+  const oab_uf = searchParams.get('oab_uf')
+
+  if (!oab_number || !oab_uf) {
+    return NextResponse.json({ error: 'oab_number and oab_uf required' }, { status: 400 })
+  }
+
+  const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
+
+  // Only delete imports from the current member, and only if not in progress
+  const { error } = await supabase
+    .from('oab_imports')
+    .delete()
+    .eq('tenant_id', ctx.tenantId)
+    .eq('member_id', ctx.memberId)
+    .eq('oab_number', oab_number)
+    .eq('oab_uf', oab_uf.toUpperCase())
+    .not('status', 'in', '("pending","running")')
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return new NextResponse(null, { status: 204 })
 }
