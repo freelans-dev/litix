@@ -31,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { createClient } from '@/lib/supabase/client'
+import { NotificationDropdown } from '@/features/alerts/components/notification-dropdown'
 
 interface NavItem {
   href: string
@@ -236,12 +237,7 @@ export function DashboardShell({
             <Menu size={20} />
           </Button>
           <span className="text-sm font-semibold">Litix</span>
-          <Link href="/dashboard/alerts" className="relative p-2">
-            <Bell size={18} />
-            {unreadAlerts > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-alert-critical" />
-            )}
-          </Link>
+          <NotificationDropdown initialCount={unreadAlerts} />
         </header>
 
         {/* Desktop header */}
@@ -259,12 +255,7 @@ export function DashboardShell({
             />
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/dashboard/alerts" className="relative p-2 rounded-md hover:bg-muted transition-colors">
-              <Bell size={18} className="text-muted-foreground" />
-              {unreadAlerts > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-alert-critical" />
-              )}
-            </Link>
+            <NotificationDropdown initialCount={unreadAlerts} />
           </div>
         </header>
 

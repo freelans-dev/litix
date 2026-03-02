@@ -1,12 +1,14 @@
 /**
  * Generates alerts for all active tenant members when new movements are detected.
  * Called from the monitoring cron job and manual refresh.
- * Sends email notifications via Resend (fire-and-forget).
+ * Sends email notifications via Resend with AI-powered summaries (fire-and-forget).
  */
 
 import { createServiceClient } from '@/lib/supabase/service'
 import { formatCNJ } from '@/lib/crypto'
 import { getResendClient, RESEND_FROM } from '@/lib/resend'
+import { summarizeMovements } from '@/lib/ai-summarizer'
+import { sendWhatsAppMessage, formatAlertWhatsApp } from '@/lib/whatsapp-notifier'
 
 interface NewMovement {
   id: string
@@ -39,6 +41,16 @@ export async function generateAlerts(
     .eq('is_active', true)
 
   if (!members || members.length === 0) return 0
+
+  // Get AI summary in parallel with alert creation (non-blocking)
+  const aiSummaryPromise = summarizeMovements(
+    newMovements.map((m) => ({
+      movement_date: m.movement_date,
+      description: m.description,
+      type: m.type,
+    })),
+    { cnj, tribunal: tribunal ?? undefined }
+  ).catch(() => null)
 
   const formattedCnj = formatCNJ(cnj)
   const movCount = newMovements.length
@@ -76,8 +88,11 @@ export async function generateAlerts(
     return 0
   }
 
-  // Fire-and-forget email sending — don't block the cron job
-  sendAlertEmails(
+  // Wait for AI summary (should be fast with Haiku)
+  const aiSummary = await aiSummaryPromise
+
+  // Fire-and-forget notifications — don't block the cron job
+  sendNotifications(
     supabase,
     members,
     insertedAlerts ?? [],
@@ -87,15 +102,16 @@ export async function generateAlerts(
     tribunal,
     title,
     bodyText,
-    newMovements
+    newMovements,
+    aiSummary
   ).catch((err) => {
-    console.error('[alert-generator] Email sending failed:', err)
+    console.error('[alert-generator] Notification sending failed:', err)
   })
 
   return alerts.length
 }
 
-async function sendAlertEmails(
+async function sendNotifications(
   supabase: ReturnType<typeof createServiceClient>,
   members: Array<{ id: string; user_id: string }>,
   insertedAlerts: Array<{ id: string; member_id: string }>,
@@ -105,16 +121,14 @@ async function sendAlertEmails(
   tribunal: string | null,
   title: string,
   bodyText: string,
-  movements: NewMovement[]
+  movements: NewMovement[],
+  aiSummary: Awaited<ReturnType<typeof summarizeMovements>>
 ) {
-  const resend = getResendClient()
-  if (!resend) return // Resend not configured
-
-  // Get emails for all members
+  // Get profiles with email and phone for all members
   const userIds = members.map((m) => m.user_id)
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, email, full_name')
+    .select('id, email, full_name, phone')
     .in('id', userIds)
 
   if (!profiles || profiles.length === 0) return
@@ -126,6 +140,64 @@ async function sendAlertEmails(
   const caseUrl = `${appUrl}/dashboard/cases/${cnj}`
   const alertsUrl = `${appUrl}/dashboard/alerts`
 
+  // --- WhatsApp notifications (fire-and-forget) ---
+  for (const member of members) {
+    const profile = profileMap.get(member.user_id)
+    if (!profile?.phone) continue
+
+    const whatsappMsg = formatAlertWhatsApp({
+      cnj: formattedCnj,
+      tribunal,
+      movementCount: movements.length,
+      movements: movements.slice(0, 3).map((m) => ({
+        movement_date: m.movement_date,
+        description: m.description,
+      })),
+      aiSummary: aiSummary?.summary ?? null,
+      caseUrl,
+    })
+
+    sendWhatsAppMessage(profile.phone, whatsappMsg).catch((err) => {
+      console.error(`[alert-generator] WhatsApp failed for ${profile.phone}:`, err)
+    })
+  }
+
+  // --- Email notifications ---
+  const resend = getResendClient()
+  if (!resend) return
+
+  // Build AI summary HTML block
+  const aiSummaryHtml = aiSummary
+    ? `
+      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin-bottom:20px;">
+        <p style="margin:0 0 4px;font-size:11px;font-weight:600;color:#0369a1;text-transform:uppercase;letter-spacing:0.5px;">Resumo Inteligente</p>
+        <p style="margin:0;font-size:14px;color:#0c4a6e;line-height:1.5;">${aiSummary.summary}</p>
+      </div>
+    `
+    : ''
+
+  // Build classified movement list
+  const movementListHtml = movements
+    .slice(0, 5)
+    .map((m) => {
+      const classification = aiSummary?.classifications?.find(
+        (c) => c.movement_date === m.movement_date
+      )
+      const badgeColor = classification?.importance === 'alta'
+        ? 'background:#fef2f2;color:#991b1b;border:1px solid #fecaca'
+        : classification?.importance === 'media'
+          ? 'background:#fffbeb;color:#92400e;border:1px solid #fde68a'
+          : 'background:#f0fdf4;color:#166534;border:1px solid #bbf7d0'
+      const categoryBadge = classification
+        ? `<span style="display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;margin-right:6px;${badgeColor}">${classification.category.toUpperCase()}</span>`
+        : ''
+      const oneLiner = classification?.one_liner
+        ? `<br/><span style="font-size:13px;color:#4b5563;font-style:italic;">${classification.one_liner}</span>`
+        : ''
+      return `<li style="margin-bottom:12px;">${categoryBadge}<strong>${m.movement_date}</strong> — ${m.description}${oneLiner}</li>`
+    })
+    .join('')
+
   const sentAlertIds: string[] = []
 
   for (const member of members) {
@@ -133,11 +205,6 @@ async function sendAlertEmails(
     if (!profile?.email) continue
 
     const alertId = memberAlertMap.get(member.id)
-
-    const movementListHtml = movements
-      .slice(0, 5)
-      .map((m) => `<li style="margin-bottom:8px;"><strong>${m.movement_date}</strong> — ${m.description}</li>`)
-      .join('')
 
     try {
       await resend.emails.send({
@@ -153,6 +220,7 @@ async function sendAlertEmails(
               <p style="margin:0 0 4px;font-size:14px;color:#6b7280;">Processo</p>
               <p style="margin:0 0 16px;font-size:18px;font-weight:600;font-family:monospace;">${formattedCnj}</p>
               ${tribunal ? `<p style="margin:0 0 16px;font-size:14px;color:#6b7280;">${tribunal}</p>` : ''}
+              ${aiSummaryHtml}
               <p style="margin:0 0 8px;font-size:14px;font-weight:600;">${movements.length} nova${movements.length > 1 ? 's' : ''} movimentac${movements.length > 1 ? 'oes' : 'ao'}:</p>
               <ul style="padding-left:20px;font-size:14px;color:#374151;">${movementListHtml}</ul>
               ${movements.length > 5 ? `<p style="font-size:13px;color:#6b7280;">e mais ${movements.length - 5} movimentac${movements.length - 5 > 1 ? 'oes' : 'ao'}...</p>` : ''}

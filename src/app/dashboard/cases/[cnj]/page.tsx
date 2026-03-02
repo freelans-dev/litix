@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { MonitorToggle } from '@/features/cases/components/monitor-toggle'
 import { RefreshButton } from '@/features/cases/components/refresh-button'
 import { EditOfficeDataSheet } from '@/features/cases/components/edit-office-data-sheet'
+import { AiCaseSummary } from '@/features/cases/components/ai-case-summary'
 import {
   ArrowLeft,
   Bell,
@@ -271,6 +272,11 @@ export default async function CaseDetailPage(props: {
             )}
           </div>
         </div>
+      )}
+
+      {/* AI Summary */}
+      {caseMovements && caseMovements.length > 0 && (
+        <AiCaseSummary cnj={caseData.cnj} />
       )}
 
       {/* Ultimo andamento */}
