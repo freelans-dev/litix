@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext } from '@/lib/auth'
-import { runOabImport } from '@/lib/oab-import'
+import { tasks } from '@trigger.dev/sdk/v3'
 import { z } from 'zod'
 
 const ESTADOS_VALIDOS = [
@@ -130,10 +130,19 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Fire-and-forget background import
-  runOabImport(importRecord.id).catch((err) => {
-    console.error(`[oab] Background import failed for ${importRecord.id}:`, err)
-  })
+  // Dispatch background import via Trigger.dev
+  try {
+    await tasks.trigger('oab-import', {
+      importId: importRecord.id,
+      tenantId: ctx.tenantId,
+      memberId: ctx.memberId,
+      oabNumber: oab_number,
+      oabUf: oabUf,
+    })
+  } catch (err) {
+    // TRIGGER_SECRET_KEY not set (local dev) — log and continue
+    console.warn('[oab] Trigger.dev dispatch skipped (TRIGGER_SECRET_KEY not configured):', err)
+  }
 
   return NextResponse.json(importRecord, { status: 201 })
 }
