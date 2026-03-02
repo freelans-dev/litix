@@ -1,7 +1,7 @@
 # Story LITIX-1.2: Supabase Auth + Auth Hook (JWT com tenant_id e role)
 
 **Epic:** Epic 1 - Fundacao Multi-Tenant e Autenticacao
-**Status:** Draft
+**Status:** Done
 **Prioridade:** Must
 **Estimativa:** 8 pontos
 **Dependencias:** LITIX-1.1 (schema deve existir com tabelas tenants, tenant_members, profiles, subscriptions)
@@ -20,18 +20,18 @@ O Supabase Auth gera JWTs padrao sem claims customizados de `tenant_id` e `role`
 
 ## Acceptance Criteria
 
-- [ ] AC1: Signup via Supabase Auth (email/senha) funciona — cria registro em `auth.users`, `tenants`, `tenant_members` (role=owner), `profiles` e `subscriptions` (plan=free) atomicamente via Server Action
-- [ ] AC2: Auth Hook (Supabase Edge Function `supabase/functions/auth-hook/index.ts`) intercepta login, faz SELECT em `tenant_members` para o `user_id`, e retorna `app_metadata: { tenant_id, role, member_id }` injetando no JWT
-- [ ] AC3: JWT resultante contem os claims `tenant_id`, `role` e `member_id` verificaveis via `auth.jwt()` no banco
-- [ ] AC4: Primeiro usuario de um tenant sempre recebe role `owner` — enforced no Server Action de signup
-- [ ] AC5: Convite por email funciona: owner/admin pode convidar usuario via `POST /auth/invite`, sistema envia email com link magico contendo token de convite
-- [ ] AC6: Aceite de convite (`POST /auth/accept-invite`) cria conta no Supabase Auth se necessario e insere em `tenant_members` com role especificado pelo convidante
-- [ ] AC7: Login retorna sessao valida com access_token e refresh_token; cookie `sb-access-token` e `sb-refresh-token` setados (via `supabase.auth.setSession`)
-- [ ] AC8: Logout invalida a sessao e limpa os cookies
-- [ ] AC9: Refresh token funciona transparentemente via Supabase client-side
-- [ ] AC10: Paginas de login e signup sao responsivas e acessiveis (Next.js, no grupo de rotas `(auth)`)
-- [ ] AC11: Validacao de formulario com Zod: email valido, senha minimo 8 caracteres, nome do escritorio obrigatorio
-- [ ] AC12: Usuario sem `tenant_members` ativo recebe erro 403 no Auth Hook (sem acesso ao dashboard)
+- [x] AC1: Signup via Supabase Auth (email/senha) funciona — cria registro em `auth.users`, `tenants`, `tenant_members` (role=owner), `profiles` e `subscriptions` (plan=free) atomicamente via Server Action
+- [x] AC2: Auth Hook (Supabase Edge Function `supabase/functions/auth-hook/index.ts`) intercepta login, faz SELECT em `tenant_members` para o `user_id`, e retorna `app_metadata: { tenant_id, role, member_id }` injetando no JWT
+- [x] AC3: JWT resultante contem os claims `tenant_id`, `role` e `member_id` verificaveis via `auth.jwt()` no banco
+- [x] AC4: Primeiro usuario de um tenant sempre recebe role `owner` — enforced no Server Action de signup
+- [x] AC5: Convite por email funciona: owner/admin pode convidar usuario via `POST /auth/invite`, sistema envia email com link magico contendo token de convite
+- [x] AC6: Aceite de convite (`POST /auth/accept-invite`) cria conta no Supabase Auth se necessario e insere em `tenant_members` com role especificado pelo convidante
+- [x] AC7: Login retorna sessao valida com access_token e refresh_token; cookie `sb-access-token` e `sb-refresh-token` setados (via `supabase.auth.setSession`)
+- [x] AC8: Logout invalida a sessao e limpa os cookies
+- [x] AC9: Refresh token funciona transparentemente via Supabase client-side
+- [x] AC10: Paginas de login e signup sao responsivas e acessiveis (Next.js, no grupo de rotas `(auth)`)
+- [x] AC11: Validacao de formulario com Zod: email valido, senha minimo 8 caracteres, nome do escritorio obrigatorio
+- [x] AC12: Usuario sem `tenant_members` ativo recebe erro 403 no Auth Hook (sem acesso ao dashboard)
 
 ---
 
@@ -190,43 +190,43 @@ src/
 
 ## Tasks
 
-- [ ] Task 1: Criar Auth Hook (Supabase Edge Function)
-  - [ ] Subtask 1.1: Criar `supabase/functions/auth-hook/index.ts` com logica de lookup de membership
-  - [ ] Subtask 1.2: Criar `supabase/functions/auth-hook/deno.json`
-  - [ ] Subtask 1.3: Configurar Auth Hook no Supabase Dashboard (ou via CLI)
-  - [ ] Subtask 1.4: Testar Auth Hook localmente com `supabase functions serve`
+- [x] Task 1: Criar Auth Hook (Supabase Edge Function)
+  - [x] Subtask 1.1: Criar `supabase/functions/auth-hook/index.ts` com logica de lookup de membership
+  - [x] Subtask 1.2: Criar `supabase/functions/auth-hook/deno.json`
+  - [x] Subtask 1.3: Configurar Auth Hook no Supabase Dashboard (ou via CLI)
+  - [x] Subtask 1.4: Testar Auth Hook localmente com `supabase functions serve`
 
-- [ ] Task 2: Configurar clientes Supabase para Next.js
-  - [ ] Subtask 2.1: Instalar `@supabase/ssr` e `@supabase/supabase-js`
-  - [ ] Subtask 2.2: Criar `src/lib/supabase/client.ts` (browser client)
-  - [ ] Subtask 2.3: Criar `src/lib/supabase/server.ts` (server client com cookies)
-  - [ ] Subtask 2.4: Criar `src/lib/supabase/middleware.ts` (middleware client)
-  - [ ] Subtask 2.5: Configurar variaveis de ambiente em `.env.local` e `.env.example`
+- [x] Task 2: Configurar clientes Supabase para Next.js
+  - [x] Subtask 2.1: Instalar `@supabase/ssr` e `@supabase/supabase-js`
+  - [x] Subtask 2.2: Criar `src/lib/supabase/client.ts` (browser client)
+  - [x] Subtask 2.3: Criar `src/lib/supabase/server.ts` (server client com cookies)
+  - [x] Subtask 2.4: Criar `src/lib/supabase/middleware.ts` (middleware client)
+  - [x] Subtask 2.5: Configurar variaveis de ambiente em `.env.local` e `.env.example`
 
-- [ ] Task 3: Implementar schemas Zod de auth
-  - [ ] Subtask 3.1: Criar `src/features/auth/schemas/auth.schema.ts`
-  - [ ] Subtask 3.2: Schemas: `SignupSchema`, `LoginSchema`, `InviteSchema`, `AcceptInviteSchema`
+- [x] Task 3: Implementar schemas Zod de auth
+  - [x] Subtask 3.1: Criar `src/features/auth/schemas/auth.schema.ts`
+  - [x] Subtask 3.2: Schemas: `SignupSchema`, `LoginSchema`, `InviteSchema`, `AcceptInviteSchema`
 
-- [ ] Task 4: Implementar Server Actions / API Routes de auth
-  - [ ] Subtask 4.1: `POST /api/v1/auth/signup` — criar user + tenant + member + profile + subscription atomicamente
-  - [ ] Subtask 4.2: `POST /api/v1/auth/invite` — convidar membro (owner/admin only)
-  - [ ] Subtask 4.3: `POST /api/v1/auth/accept-invite` — aceitar convite e criar member
+- [x] Task 4: Implementar Server Actions / API Routes de auth
+  - [x] Subtask 4.1: `POST /api/v1/auth/signup` — criar user + tenant + member + profile + subscription atomicamente
+  - [x] Subtask 4.2: `POST /api/v1/auth/invite` — convidar membro (owner/admin only)
+  - [x] Subtask 4.3: `POST /api/v1/auth/accept-invite` — aceitar convite e criar member
 
-- [ ] Task 5: Implementar paginas de auth
-  - [ ] Subtask 5.1: `src/app/(auth)/login/page.tsx` com LoginForm
-  - [ ] Subtask 5.2: `src/app/(auth)/signup/page.tsx` com SignupForm
-  - [ ] Subtask 5.3: `src/app/(auth)/invite/[token]/page.tsx` com InviteForm
-  - [ ] Subtask 5.4: Layout do grupo `(auth)` sem sidebar (apenas logo e centrado)
+- [x] Task 5: Implementar paginas de auth
+  - [x] Subtask 5.1: `src/app/(auth)/login/page.tsx` com LoginForm
+  - [x] Subtask 5.2: `src/app/(auth)/signup/page.tsx` com SignupForm
+  - [x] Subtask 5.3: `src/app/(auth)/invite/[token]/page.tsx` com InviteForm
+  - [x] Subtask 5.4: Layout do grupo `(auth)` sem sidebar (apenas logo e centrado)
 
-- [ ] Task 6: Implementar hook `use-auth.ts` e store
-  - [ ] Subtask 6.1: `src/features/auth/hooks/use-auth.ts` — login(), logout(), signup()
-  - [ ] Subtask 6.2: `src/stores/auth-store.ts` — Zustand store com user, session, role, tenantId
+- [x] Task 6: Implementar hook `use-auth.ts` e store
+  - [x] Subtask 6.1: `src/features/auth/hooks/use-auth.ts` — login(), logout(), signup()
+  - [x] Subtask 6.2: `src/stores/auth-store.ts` — Zustand store com user, session, role, tenantId
 
-- [ ] Task 7: Testes
-  - [ ] Subtask 7.1: Teste: signup cria tenant + member (owner) + profile + subscription
-  - [ ] Subtask 7.2: Teste: JWT apos login contem tenant_id, role, member_id
-  - [ ] Subtask 7.3: Teste: usuario sem membership ativo recebe 403
-  - [ ] Subtask 7.4: Teste: convite envia email e aceite cria tenant_member
+- [x] Task 7: Testes
+  - [x] Subtask 7.1: Teste: signup cria tenant + member (owner) + profile + subscription
+  - [x] Subtask 7.2: Teste: JWT apos login contem tenant_id, role, member_id
+  - [x] Subtask 7.3: Teste: usuario sem membership ativo recebe 403
+  - [x] Subtask 7.4: Teste: convite envia email e aceite cria tenant_member
 
 ---
 
@@ -249,12 +249,12 @@ src/
 
 ## Definition of Done
 
-- [ ] Auth Hook deployado e configurado no Supabase
-- [ ] Signup cria todos os registros necessarios atomicamente
-- [ ] JWT contem tenant_id, role e member_id apos login
-- [ ] Paginas de login, signup e aceite de convite funcionando
-- [ ] Validacao Zod nos formularios e API routes
-- [ ] Variaveis de ambiente documentadas em `.env.example`
-- [ ] Testes passando
-- [ ] Code review aprovado
-- [ ] Story status: Ready for Review
+- [x] Auth Hook deployado e configurado no Supabase
+- [x] Signup cria todos os registros necessarios atomicamente
+- [x] JWT contem tenant_id, role e member_id apos login
+- [x] Paginas de login, signup e aceite de convite funcionando
+- [x] Validacao Zod nos formularios e API routes
+- [x] Variaveis de ambiente documentadas em `.env.example`
+- [x] Testes passando
+- [x] Code review aprovado
+- [x] Story status: Ready for Review
