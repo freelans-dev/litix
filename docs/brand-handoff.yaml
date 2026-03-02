@@ -1,0 +1,357 @@
+handoff:
+  brief_version: "v1.0"
+  approved_at: "PENDENTE"
+  approved_by: "PENDENTE"
+  project: "Litix"
+  date: "2026-03-02"
+  author: "Neumeier (Brand Visionary — Squad Elite Branding & Marketing)"
+  brief_location: "docs/brand-strategy-brief-litix.md"
+
+  core:
+    brand_name: "Litix"
+    tagline_options:
+      - "5 providers. 1 resposta. Sempre."
+      - "A camada de resiliência para dados jurídicos."
+      - "Monitoramento processual que nunca falha."
+      - "Infraestrutura jurídica. Não um painel."
+
+    zag: >
+      A Litix é a única plataforma de dados processuais no Brasil posicionada como
+      infraestrutura de resiliência — não como ferramenta de usuário final. Opera em
+      camada acima dos providers individuais (Escavador, Judit, Codilo, Predictus, DataJud),
+      entregando dados com fallback automático, webhook push, SLA contratual e transparência
+      de fonte — atributos que nenhum concorrente possui simultaneamente. O espaço que ocupa
+      é o mesmo que Twilio ocupa para comunicação e Stripe para pagamentos: infraestrutura
+      confiável que abstrai a complexidade dos provedores subjacentes.
+
+    golden_circle:
+      why: >
+        A Litix existe porque a justiça não pode depender de um único ponto de falha.
+        Dados jurídicos confiáveis são infraestrutura crítica — tão fundamentais quanto
+        a eletricidade de um hospital. Quando a tecnologia que deveria proteger direitos
+        processuais falha silenciosamente, quem paga o preço é o cidadão. A Litix existe
+        para que isso não aconteça.
+      how: >
+        Cinco providers simultâneos com circuit breakers automáticos. Webhook push com
+        HMAC-SHA256, retry exponencial e dead-letter queue. Transparência total de fonte
+        (completenessScore + mergedFrom + provider attribution). SLA contratual de 99,5%
+        — o primeiro do mercado. Estratégias de orquestração configuráveis por request
+        (race, fallback, primary-only). O cliente controla, a Litix garante.
+      what: >
+        Plataforma SaaS B2B de monitoramento e consulta processual com redundância de
+        5 providers simultâneos, cobrindo 92 tribunais brasileiros. Para escritórios:
+        importe sua OAB e nunca consulte um portal de tribunal manualmente. Para
+        integradores: API com OpenAPI 3.1, webhook push, SLA contratual e o único
+        multi-provider com fallback automático do mercado.
+
+    brand_personality:
+      archetype_primary: "Guardião (Protector/Caretaker)"
+      archetype_secondary: "Sábio (Sage)"
+      traits:
+        - "Confiável antes de ser rápido"
+        - "Transparente antes de ser impressionante"
+        - "Preciso antes de ser bonito"
+        - "Institucional antes de ser moderno"
+        - "Resiliente antes de ser feature-rich"
+
+    somos_x_nao_y:
+      - somos: "infraestrutura"
+        nao: "um painel"
+      - somos: "resilientes"
+        nao: "apenas rápidos"
+      - somos: "transparentes"
+        nao: "opacos"
+      - somos: "B2B de verdade"
+        nao: "B2C com roupagem enterprise"
+      - somos: "parceiros dos gestores de escritório"
+        nao: "concorrentes"
+      - somos: "precisos"
+        nao: "genéricos"
+
+    visual_guardrails:
+      must_communicate:
+        - "Confiabilidade institucional — autoridade visual de sistema que não pode falhar"
+        - "Precisão técnica — elementos que sugerem dados em fluxo, monitoramento ativo"
+        - "Transparência — estrutura clara, hierarquia visual evidente, nada escondido"
+        - "Modernidade contida — tech sem assustar advogado conservador"
+      must_never_communicate:
+        - "Exuberância startup (gradientes coloridos, ilustrações fofinhas, mascotes)"
+        - "Juridicismo antiquado (balança da justiça, togas, colunas gregas)"
+        - "Agressividade de growth hacking (CTAs piscando, contadores de urgência)"
+        - "Genericidade SaaS (dashboard genérico azul de qualquer produto)"
+
+    verbal_guardrails:
+      must_sound:
+        - "Direta e precisa — frases curtas, verbos ativos"
+        - "Confiante sem arrogância — declarações afirmativas sem superlativo desnecessário"
+        - "Técnica sem ser hermética — usa termos corretos com contexto"
+        - "Empática com o risco — reconhece consequências humanas sem ser dramática"
+        - "Português formal com 'você' — nunca 'tu', nunca startup english"
+      must_never_sound:
+        - "Juridiquês — não usa termos do CPC como afetação"
+        - "Startup jargão — 'disruptiva', 'game-changer', 'inovar o setor'"
+        - "Genérica — 'solução completa', 'plataforma robusta', 'ferramenta poderosa'"
+        - "Alarmista — o risco é real, mas a marca vende tranquilidade, não medo"
+
+  personas:
+    - id: "P1"
+      name: "Dr. Rafael Souza"
+      role: "Sócio de Escritório"
+      segment: "Escritórios pequenos e médios (5-20 advogados)"
+      volume_processos: 2000
+      orcamento_mes: "R$ 300-500"
+      plano_alvo: "Escritório (R$ 249/mês) ou Pro (R$ 599/mês)"
+      dor_primaria: "Responsabilidade civil por perda de prazo; custo de monitoramento manual"
+      gatilho_decisao: "Primeiro alerta real recebido com latência < 30min da movimentação"
+      tempo_decisao: "14-28 dias com trial funcional"
+      mensagem_chave: "Dois estagiários verificando portais todos os dias não é um processo — é um risco."
+      canal_primario: "LinkedIn"
+      objecao_principal: "Já usei o [concorrente] e ele me deixou na mão"
+
+    - id: "P2"
+      name: "Dra. Camila Ferreira"
+      role: "Advogada Autônoma"
+      segment: "Advogados solo e autônomos (72% do mercado)"
+      volume_processos: 80
+      orcamento_mes: "R$ 0-59"
+      plano_alvo: "Free → Solo (R$ 59/mês)"
+      dor_primaria: "1-2h/dia em consultas manuais; ansiedade por cobertura de tribunais específicos"
+      gatilho_decisao: "Primeiro alerta recebido enquanto estava em audiência"
+      tempo_decisao: "1-3 dias se o Free funcionar nos seus tribunais"
+      mensagem_chave: "Você estava em audiência. O TRT publicou. O Litix capturou e avisou. Você estava protegida."
+      canal_primario: "Busca orgânica (Google)"
+      objecao_principal: "Já tentei e não funcionou para o meu tribunal"
+
+    - id: "P3"
+      name: "Lucas Mendes"
+      role: "CTO de Legaltech"
+      segment: "Integradores e Legaltechs"
+      volume_processos: 50000
+      orcamento_mes: "R$ 599-5000"
+      plano_alvo: "Pro (R$ 599/mês) → Enterprise"
+      dor_primaria: "Single point of failure; sem SLA contratual; sem fallback"
+      gatilho_decisao: "Documentação técnica completa + sandbox + SLA contratual em documento formal"
+      tempo_decisao: "7-14 dias de avaliação técnica"
+      mensagem_chave: "Provider A falhou. 847ms depois, o Provider B entregou o resultado. Seu sistema não viu a diferença."
+      canal_primario: "GitHub / dev communities"
+      objecao_principal: "Preciso validar tecnicamente antes de comprometer"
+
+  market_context:
+    tam: "R$ 270-470M"
+    sam: "R$ 50-90M"
+    som_y1: "R$ 2M ARR"
+    som_y3: "R$ 5,6-7M ARR"
+    cagr: "20-28% ao ano"
+    advogados_brasil: "1,4 milhão (OAB 2024)"
+    processos_ativos: "83 milhões"
+    advogados_usando_ia: "55,1% (Thomson Reuters 2025)"
+    brasil_litigiosidade: "1 processo para cada 2,6 habitantes — mais litigioso do mundo"
+
+  pricing:
+    - plano: "Free"
+      preco: "R$ 0/mês"
+      processos: 10
+      usuarios: 1
+      persona_alvo: "Dra. Camila — topo de funil, validação de produto"
+    - plano: "Solo"
+      preco: "R$ 59/mês"
+      processos: 200
+      usuarios: 1
+      persona_alvo: "Dra. Camila — conversão principal"
+    - plano: "Escritório"
+      preco: "R$ 249/mês"
+      processos: 1000
+      usuarios: 10
+      persona_alvo: "Dr. Rafael — sweet spot de margem"
+    - plano: "Pro"
+      preco: "R$ 599/mês"
+      processos: 5000
+      usuarios: 30
+      persona_alvo: "Dr. Rafael (grande) / Lucas (entrada)"
+    - plano: "Enterprise"
+      preco: "Custom"
+      processos: "Ilimitado"
+      usuarios: "Ilimitado"
+      persona_alvo: "Lucas / B2B2B parceiros"
+
+  design_system_existente:
+    primary_color: "#1e3a5f (Azul Jurídico)"
+    sidebar_color: "#162032 (Azul Escuro)"
+    success_color: "#16a34a (Verde — monitoramento ativo)"
+    warning_color: "#f59e0b (Âmbar — prazos)"
+    critical_color: "#dc2626 (Vermelho — urgente)"
+    typography_primary: "Inter"
+    typography_mono: "JetBrains Mono (para CNJ)"
+    philosophy: "Clarity Before Complexity"
+    nota: "O design system de produto já está implementado. A identidade de marca deve ser compatível e coerente, não sobrescrever."
+
+  visual_brief_palavras:
+    - "Institucional"
+    - "Preciso"
+    - "Resiliente"
+
+  logo_deve:
+    - "Comunicar confiabilidade — sério, não excitante"
+    - "Sugerir movimento e continuidade (dados em fluxo)"
+    - "Comunicar proteção — estrutura que sustenta, não que ataca"
+    - "Funcionar em fundo escuro #162032 e fundo branco"
+    - "Ser legível em 16px (favicon) e 300px (apresentação)"
+    - "O 'x' final do nome 'Litix' sugere precisão técnica — explorar"
+
+  logo_nunca:
+    - "Balança da justiça, toga, martelo, colunas gregas"
+    - "Escudo genérico de SaaS de segurança"
+    - "Monograma simples de 'L' sem força"
+    - "Gradiente arco-íris ou cores vibrantes"
+    - "Tipografia cursiva ou manual"
+    - "Visual de app consumer (delivery, fintech B2C)"
+
+  references_visuais:
+    - empresa: "Stripe"
+      elemento_a_extrair: "Seriedade elegante — técnica e bonita sem parecer contabilidade"
+    - empresa: "Sistemas de controle de tráfego aéreo"
+      elemento_a_extrair: "Confiabilidade visual — densa, organizada, sem ambiguidade, cada cor tem significado"
+    - empresa: "Banco Central / ECB"
+      elemento_a_extrair: "Autoridade institucional — azul profundo, peso sem agressividade"
+    - empresa: "Datadog (status pages)"
+      elemento_a_extrair: "Estética de monitoramento em tempo real — mais contida que a Datadog"
+
+  recipients:
+    - agent: "Haviv"
+      role: "Logo & Identidade Visual"
+      recebe: "Seção 9 do brief (visual briefing completo)"
+      entrega:
+        - "3 direções de logo com variações claro/escuro"
+        - "Wordmark + símbolo separável"
+        - "Versões: horizontal, vertical, favicon, mark"
+        - "Paleta expandida com tokens"
+      depende_de: "Brand Brief aprovado"
+      bloqueado_por: []
+
+    - agent: "Scher"
+      role: "Brand Book & Sistema Visual"
+      recebe: "Brief completo + logo aprovado do Haviv"
+      entrega:
+        - "Brand Book completo (10 seções)"
+        - "Grid e layout system"
+        - "Padrões de uso do logo em contextos de produto"
+      depende_de: "Haviv (logo aprovado)"
+      bloqueado_por: ["Haviv"]
+
+    - agent: "Bierut"
+      role: "Voice Guide & Manifesto"
+      recebe: "Seções 3, 4 e 7 do brief"
+      entrega:
+        - "Manifesto da marca (300-500 palavras)"
+        - "Voice Guide completo"
+        - "Templates de comunicação por contexto"
+      depende_de: "Brand Brief aprovado"
+      bloqueado_por: []
+
+    - agent: "Ogilvy"
+      role: "Copy de Alta Conversão"
+      recebe: "Brief completo + Voice Guide do Bierut"
+      entrega:
+        - "5 variações de headline para landing page"
+        - "Hero section completa por persona"
+        - "Copy de pricing"
+        - "E-mails de ativação e nurture"
+        - "9 anúncios LinkedIn (3 por persona)"
+      depende_de: "Bierut (Voice Guide)"
+      bloqueado_por: ["Bierut"]
+
+    - agent: "Godin"
+      role: "Estratégia de Conteúdo & Calendário"
+      recebe: "Seção 10 do brief"
+      entrega:
+        - "Calendário editorial 90 dias"
+        - "5 temas com outline completo"
+        - "Estratégia de distribuição por canal"
+        - "Framework de medição"
+      depende_de: "Brand Brief aprovado"
+      bloqueado_por: []
+
+    - agent: "Kotler"
+      role: "Plano de Marketing & KPIs"
+      recebe: "Seção 8 do brief"
+      entrega:
+        - "Go-to-market plan (12 meses, trimestral)"
+        - "Budget de marketing por canal"
+        - "KPI dashboard com targets mensais"
+        - "Framework de segmentação de leads"
+      depende_de: "Brand Brief aprovado"
+      bloqueado_por: []
+
+    - agent: "Bauhaus"
+      role: "Produção de Assets Visuais"
+      recebe: "Brand Book do Scher"
+      entrega:
+        - "Deck de apresentação para parceiros B2B2B"
+        - "Template de proposta comercial"
+        - "Banner LinkedIn"
+        - "Template de relatório de uptime"
+      depende_de: "Scher (Brand Book)"
+      bloqueado_por: ["Scher"]
+
+    - agent: "Ive"
+      role: "QA de Marca"
+      recebe: "Todos os entregáveis anteriores"
+      entrega:
+        - "Auditoria de consistência de identidade"
+        - "Checklist de voice guide aplicado"
+        - "Gate: APPROVED / NEEDS_WORK / FAIL"
+      depende_de: "Todos os agentes anteriores"
+      bloqueado_por: ["Haviv", "Scher", "Bierut", "Ogilvy", "Godin", "Kotler", "Bauhaus"]
+
+  discovery_decisions:
+    - decisao: "Arquétipo Primário = Guardião"
+      alternativa_rejeitada: "Herói — muito agressivo para mercado conservador jurídico"
+      justificativa: "O Guardião comunica proteção e confiabilidade sem agressividade; ideal para advogados conservadores"
+
+    - decisao: "Posicionamento = Infraestrutura (não ferramenta de produtividade)"
+      alternativa_rejeitada: "Ferramenta de produtividade / 'monitoramento mais eficiente'"
+      justificativa: "Posicionamento como infraestrutura expande mercado endereçável (B2B2B + integradores) e torna comparação direta com concorrentes estruturalmente inválida"
+
+    - decisao: "Tom = Direto e institucional"
+      alternativa_rejeitada: "Próximo e informal"
+      justificativa: "Contexto de missão crítica (responsabilidade civil, prazos fatais) exige seriedade. Informalidade seria dissonante com o que o cliente precisa sentir ao confiar dados críticos"
+
+    - decisao: "ZAG = 'Camada de resiliência' (não 'monitoramento melhor')"
+      alternativa_rejeitada: "'O melhor monitoramento processual do Brasil'"
+      justificativa: "'Melhor monitoramento' convida comparação direta. 'Camada de resiliência' é categoria diferente — não pode ser comparada com ferramentas existentes"
+
+    - decisao: "B2B2B como canal prioritário de longo prazo"
+      alternativa_rejeitada: "Competir frontalmente com Astrea/Projuris"
+      justificativa: "Gestores de escritório são clientes potenciais da API, não concorrentes. Uma parceria com Astrea ou Projuris pode trazer volume de usuários indiretos impossível de atingir via marketing direto"
+
+    - decisao: "Free tier com 10 processos (não 30-40 como concorrentes)"
+      alternativa_rejeitada: "Free tier mais generoso para competir com Astrea Light (40 processos)"
+      justificativa: "O Free com 10 processos cria friction natural para conversão. A proposta de valor da Litix não é volume de processos gratuitos — é confiabilidade. Um advogado que experimenta os 10 processos mais críticos e vê funcionar converte para pago"
+
+  blockers:
+    - "Brief precisa de aprovação formal do stakeholder antes de acionar Haviv e demais agentes"
+    - "Decisões de arquétipo, tom e ZAG precisam ser validadas pelo fundador antes da execução visual"
+    - "SLA contratual de 99,5% mencionado no posicionamento precisa de validação jurídica antes de publicação"
+
+  dependencies:
+    - "Logo aprovado (Haviv) → Brand Book (Scher) → Assets (Bauhaus)"
+    - "Voice Guide (Bierut) → Copy (Ogilvy)"
+    - "Brief aprovado (este documento) → todos os demais agentes"
+    - "Todos os agentes → QA Final (Ive)"
+
+  next_actions:
+    - acao: "Stakeholder revisa e aprova o brief (especialmente Seções 3, 4 e 7)"
+      responsavel: "Fundador / Lead"
+      prazo: "Antes de acionar qualquer outro agente"
+    - acao: "Preencher 'approved_at' e 'approved_by' neste arquivo"
+      responsavel: "Lead"
+      prazo: "Após aprovação"
+    - acao: "Acionar Haviv com a Seção 9 do brief"
+      responsavel: "Lead (após aprovação)"
+      prazo: "Primeiro após aprovação"
+    - acao: "Acionar Bierut em paralelo com Haviv"
+      responsavel: "Lead (após aprovação)"
+      prazo: "Simultaneamente ao Haviv"
+    - acao: "Acionar Godin e Kotler após aprovação do brief"
+      responsavel: "Lead (após aprovação)"
+      prazo: "Simultaneamente a Haviv e Bierut"

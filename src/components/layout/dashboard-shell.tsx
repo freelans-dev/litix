@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -147,8 +148,8 @@ export function DashboardShell({
     <div className={cn('flex flex-col h-full bg-sidebar text-sidebar-foreground', className)}>
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 h-16 border-b border-sidebar-border shrink-0">
-        <div className="w-7 h-7 rounded-md bg-sidebar-primary flex items-center justify-center">
-          <span className="text-xs font-bold text-white">L</span>
+        <div className="w-7 h-7 flex items-center justify-center">
+          <Image src="/branding/logo-no-icon.png" alt="Litix" width={28} height={28} />
         </div>
         <div className="flex flex-col">
           <span className="text-sm font-semibold text-sidebar-foreground leading-tight">Litix</span>

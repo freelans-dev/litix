@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { LoginForm } from '@/features/auth/components/login-form'
 
@@ -16,8 +17,8 @@ export default async function LoginPage({
       <div className="w-full max-w-sm space-y-6">
         {/* Logo */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-primary-foreground font-bold text-xl">
-            L
+          <div className="inline-flex items-center justify-center">
+            <Image src="/branding/logo-no-wordmark.png" alt="Litix" width={80} height={80} priority />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Entrar no Litix</h1>

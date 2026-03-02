@@ -22,10 +22,16 @@ export const metadata: Metadata = {
   description:
     'Plataforma de monitoramento e consulta processual multi-provider para escritórios de advocacia. Acompanhe seus processos em tempo real.',
   keywords: ['monitoramento processual', 'OAB', 'processos judiciais', 'advocacia', 'CNJ'],
+  icons: {
+    icon: '/branding/logo-no-icon.png',
+    apple: '/branding/logo-no-icon-192.png',
+    shortcut: '/branding/logo-no-icon.png',
+  },
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
     siteName: 'Litix',
+    images: [{ url: '/logo.png', width: 1024, height: 1024, alt: 'Litix' }],
   },
 }
 
