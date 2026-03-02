@@ -148,13 +148,8 @@ export function DashboardShell({
     <div className={cn('flex flex-col h-full bg-sidebar text-sidebar-foreground', className)}>
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 h-16 border-b border-sidebar-border shrink-0">
-        <div className="w-7 h-7 flex items-center justify-center">
-          <Image src="/branding/logo-no-icon.png" alt="Litix" width={28} height={28} />
-        </div>
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold text-sidebar-foreground leading-tight">Litix</span>
-          <PlanBadge />
-        </div>
+        <Image src="/branding/logo-no-wordmark.png" alt="Litix" width={44} height={44} className="brightness-0 invert" />
+        <PlanBadge />
       </div>
 
       {/* Tenant */}
@@ -239,7 +234,7 @@ export function DashboardShell({
           <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
             <Menu size={20} />
           </Button>
-          <span className="text-sm font-semibold">Litix</span>
+          <Image src="/branding/logo-no-wordmark.png" alt="Litix" width={40} height={40} />
           <NotificationDropdown initialCount={unreadAlerts} />
         </header>
 

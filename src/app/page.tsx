@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowRight, Bell, CheckCircle, RefreshCw, Shield, Webhook, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -8,12 +9,7 @@ export default function HomePage() {
       {/* Nav */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-              <span className="text-xs font-bold text-primary-foreground">L</span>
-            </div>
-            <span className="font-semibold text-base">Litix</span>
-          </div>
+          <Image src="/branding/logo-no-wordmark.png" alt="Litix" width={48} height={48} />
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <Link href="/pricing" className="hover:text-foreground transition-colors">Planos</Link>
             <Link href="#funcionalidades" className="hover:text-foreground transition-colors">Funcionalidades</Link>
@@ -166,10 +162,8 @@ export default function HomePage() {
       <footer className="py-8 px-4 border-t border-border">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-              <span className="text-xs font-bold text-primary-foreground">L</span>
-            </div>
-            <span>Litix © 2026</span>
+            <Image src="/branding/logo-no-wordmark.png" alt="Litix" width={32} height={32} />
+            <span>© 2026</span>
           </div>
           <div className="flex gap-6">
             <Link href="/legal/termos" className="hover:text-foreground transition-colors">Termos</Link>
