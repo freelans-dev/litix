@@ -1,7 +1,7 @@
 # Story LITIX-1.4: CRUD de Membros e Roles do Escritorio
 
 **Epic:** Epic 1 - Fundacao Multi-Tenant e Autenticacao
-**Status:** Draft
+**Status:** Done
 **Prioridade:** Must
 **Estimativa:** 5 pontos
 **Dependencias:** LITIX-1.2, LITIX-1.3
@@ -20,15 +20,15 @@ Escritorios de advocacia tem hierarquia clara: socios (owners/admins), advogados
 
 ## Acceptance Criteria
 
-- [ ] AC1: Pagina `/dashboard/settings/team` lista todos os membros do tenant com nome, email, role e status (ativo/pendente)
-- [ ] AC2: Owner pode convidar novo membro via formulario (email + role) — dispara email de convite (LITIX-1.2)
-- [ ] AC3: Owner pode alterar role de qualquer membro (exceto o proprio, para evitar lockout)
-- [ ] AC4: Admin pode convidar members e viewers, mas nao pode alterar role de outros admins ou owners
-- [ ] AC5: Owner/Admin podem desativar membro (`is_active = false`) — membro perde acesso imediatamente (proximo login falha no Auth Hook)
-- [ ] AC6: Membro desativado pode ser reativado por owner/admin
-- [ ] AC7: Contagem de membros ativos e verificada contra `plan_limits.max_users` antes de permitir novo convite — se no limite, exibe mensagem de upgrade
-- [ ] AC8: Lista de membros mostra convites pendentes (aceite_at IS NULL) com opcao de reenviar convite
-- [ ] AC9: Permissoes enforced via RLS no banco (nao apenas na UI) — API retorna 403 para operacoes nao permitidas
+- [x] AC1: Pagina `/dashboard/settings/team` lista todos os membros do tenant com nome, email, role e status (ativo/pendente)
+- [x] AC2: Owner pode convidar novo membro via formulario (email + role) — dispara email de convite (LITIX-1.2)
+- [x] AC3: Owner pode alterar role de qualquer membro (exceto o proprio, para evitar lockout)
+- [x] AC4: Admin pode convidar members e viewers, mas nao pode alterar role de outros admins ou owners
+- [x] AC5: Owner/Admin podem desativar membro (`is_active = false`) — membro perde acesso imediatamente (proximo login falha no Auth Hook)
+- [x] AC6: Membro desativado pode ser reativado por owner/admin
+- [x] AC7: Contagem de membros ativos e verificada contra `plan_limits.max_users` antes de permitir novo convite — se no limite, exibe mensagem de upgrade
+- [x] AC8: Lista de membros mostra convites pendentes (aceite_at IS NULL) com opcao de reenviar convite
+- [x] AC9: Permissoes enforced via RLS no banco (nao apenas na UI) — API retorna 403 para operacoes nao permitidas
 
 ---
 
@@ -98,23 +98,23 @@ src/
 
 ## Tasks
 
-- [ ] Task 1: Implementar API routes de gerenciamento de equipe
-  - [ ] Subtask 1.1: `GET /api/v1/team/members` com paginacao
-  - [ ] Subtask 1.2: `PATCH /api/v1/team/members/:id/role` com validacao de permissao
-  - [ ] Subtask 1.3: `PATCH /api/v1/team/members/:id/status` (ativar/desativar)
-  - [ ] Subtask 1.4: `POST /api/v1/team/members/:id/resend` para reenviar convite
+- [x] Task 1: Implementar API routes de gerenciamento de equipe
+  - [x] Subtask 1.1: `GET /api/v1/team/members` com paginacao
+  - [x] Subtask 1.2: `PATCH /api/v1/team/members/:id/role` com validacao de permissao
+  - [x] Subtask 1.3: `PATCH /api/v1/team/members/:id/status` (ativar/desativar)
+  - [x] Subtask 1.4: `POST /api/v1/team/members/:id/resend` para reenviar convite
 
-- [ ] Task 2: Implementar pagina de gerenciamento de equipe
-  - [ ] Subtask 2.1: `members-table.tsx` com colunas nome, email, role, status, acoes
-  - [ ] Subtask 2.2: `invite-member-dialog.tsx` com select de role e validacao de limite do plano
-  - [ ] Subtask 2.3: `member-actions-menu.tsx` com acoes condicionais por role do usuario logado
-  - [ ] Subtask 2.4: Pagina `/dashboard/settings/team/page.tsx`
+- [x] Task 2: Implementar pagina de gerenciamento de equipe
+  - [x] Subtask 2.1: `members-table.tsx` com colunas nome, email, role, status, acoes
+  - [x] Subtask 2.2: `invite-member-dialog.tsx` com select de role e validacao de limite do plano
+  - [x] Subtask 2.3: `member-actions-menu.tsx` com acoes condicionais por role do usuario logado
+  - [x] Subtask 2.4: Pagina `/dashboard/settings/team/page.tsx`
 
-- [ ] Task 3: Testes
-  - [ ] Subtask 3.1: Teste: owner pode alterar role de admin para member
-  - [ ] Subtask 3.2: Teste: admin nao pode alterar role de owner (403)
-  - [ ] Subtask 3.3: Teste: desativar membro invalida acesso no proximo login
-  - [ ] Subtask 3.4: Teste: convite com limite de plano atingido retorna erro amigavel
+- [x] Task 3: Testes
+  - [x] Subtask 3.1: Teste: owner pode alterar role de admin para member
+  - [x] Subtask 3.2: Teste: admin nao pode alterar role de owner (403)
+  - [x] Subtask 3.3: Teste: desativar membro invalida acesso no proximo login
+  - [x] Subtask 3.4: Teste: convite com limite de plano atingido retorna erro amigavel
 
 ---
 
@@ -133,9 +133,9 @@ src/
 
 ## Definition of Done
 
-- [ ] CRUD de membros funcionando com permissoes enforced
-- [ ] Verificacao de limite de plano no convite
-- [ ] Pagina de equipe com UI responsiva
-- [ ] Testes passando
-- [ ] Code review aprovado
-- [ ] Story status: Ready for Review
+- [x] CRUD de membros funcionando com permissoes enforced
+- [x] Verificacao de limite de plano no convite
+- [x] Pagina de equipe com UI responsiva
+- [x] Testes passando
+- [x] Code review aprovado
+- [x] Story status: Ready for Review

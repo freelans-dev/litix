@@ -24,12 +24,11 @@ export default async function TeamPage() {
   const plan = ctx.plan ?? 'free'
   const userLimit = PLAN_USER_LIMIT[plan] ?? 1
 
-  // Get team members with profiles
+  // Get team members with profiles (active, pending and inactive)
   const { data: members } = await supabase
     .from('tenant_members')
-    .select('id, role, is_active, created_at, user_id')
+    .select('id, role, is_active, invited_at, accepted_at, created_at, user_id')
     .eq('tenant_id', ctx.tenantId)
-    .eq('is_active', true)
     .order('created_at', { ascending: true })
 
   // Get profiles for members
@@ -44,11 +43,16 @@ export default async function TeamPage() {
   const membersWithProfiles = (members ?? []).map((m) => ({
     ...m,
     profile: profiles?.find((p) => p.id === m.user_id) ?? null,
+    status: (!m.is_active ? 'inactive' : m.accepted_at ? 'active' : 'pending') as
+      | 'active'
+      | 'pending'
+      | 'inactive',
   }))
 
+  const activeCount = (members ?? []).filter((m) => m.is_active).length
   const isOwnerOrAdmin = ctx.role === 'owner' || ctx.role === 'admin'
   const canInvite =
-    isOwnerOrAdmin && (userLimit === -1 || (members?.length ?? 0) < userLimit)
+    isOwnerOrAdmin && (userLimit === -1 || activeCount < userLimit)
 
   if (userLimit === 1) {
     return (
@@ -101,7 +105,7 @@ export default async function TeamPage() {
           </p>
         </div>
         <Badge variant="outline" className="shrink-0">
-          {members?.length ?? 0} / {userLimit === -1 ? '∞' : userLimit}
+          {activeCount} / {userLimit === -1 ? '∞' : userLimit}
         </Badge>
       </div>
 
