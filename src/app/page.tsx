@@ -9,7 +9,7 @@ export default function HomePage() {
       {/* Nav */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Image src="/branding/logo-no-wordmark.png" alt="Litix" width={48} height={48} />
+          <Image src="/branding/logo-no-wordmark.png" alt="Litix" width={100} height={46} />
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <Link href="/pricing" className="hover:text-foreground transition-colors">Planos</Link>
             <Link href="#funcionalidades" className="hover:text-foreground transition-colors">Funcionalidades</Link>
@@ -162,7 +162,7 @@ export default function HomePage() {
       <footer className="py-8 px-4 border-t border-border">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <Image src="/branding/logo-no-wordmark.png" alt="Litix" width={32} height={32} />
+            <Image src="/branding/logo-no-wordmark.png" alt="Litix" width={78} height={36} />
             <span>© 2026</span>
           </div>
           <div className="flex gap-6">

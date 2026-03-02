@@ -88,7 +88,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center">
-            <Image src="/branding/logo-no-wordmark.png" alt="Litix" width={80} height={80} priority />
+            <Image src="/branding/logo-no-wordmark.png" alt="Litix" width={160} height={74} priority />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Redefinir senha</h1>
