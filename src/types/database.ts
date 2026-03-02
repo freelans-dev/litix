@@ -384,6 +384,42 @@ export interface Database {
         }
         Relationships: []
       }
+      api_keys: {
+        Row: {
+          id: string
+          tenant_id: string
+          member_id: string
+          name: string
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          member_id: string
+          name?: string
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          member_id?: string
+          name?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          is_active?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           id: string

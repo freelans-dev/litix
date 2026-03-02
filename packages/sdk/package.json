@@ -1,0 +1,29 @@
+{
+  "name": "@litix/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript SDK for the Litix LegalTech API",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "license": "MIT"
+}

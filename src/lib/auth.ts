@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 
 export type TenantContext = {
   tenantId: string
@@ -12,11 +13,27 @@ export type TenantContext = {
 
 /**
  * Gets the current tenant context.
- * JWT claims (tenant_id, role, member_id) come from the Supabase Auth Hook when configured.
- * Plan is always read from the DB to ensure it reflects the latest value.
- * Falls back to DB lookup for tenant_id/role/member_id when Auth Hook is not yet configured.
+ * Supports two auth methods:
+ * 1. API key: Bearer ltx_... header → resolved via api_keys table
+ * 2. Session: Supabase Auth JWT → resolved via auth hook or DB fallback
  */
 export async function getTenantContext(): Promise<TenantContext> {
+  // API key auth path
+  const headersList = await headers()
+  const authHeader = headersList.get('authorization')
+
+  if (authHeader?.startsWith('Bearer ltx_')) {
+    const { hashApiKey, resolveApiKey, recordApiKeyUsage } = await import('@/lib/api-keys')
+    const keyHash = hashApiKey(authHeader.slice(7))
+    const ctx = await resolveApiKey(keyHash)
+    if (!ctx) {
+      throw new ApiKeyError('Invalid or inactive API key')
+    }
+    recordApiKeyUsage(ctx.keyId).catch(() => {})
+    return ctx
+  }
+
+  // Session auth path
   const supabase = await createClient()
   const { data: { user }, error } = await supabase.auth.getUser()
 
@@ -101,5 +118,16 @@ export function requireRole(
 ): void {
   if (ROLE_LEVELS[context.role] < ROLE_LEVELS[minRole]) {
     throw new Error('Forbidden: insufficient role')
+  }
+}
+
+/**
+ * Error thrown when API key authentication fails.
+ * Route handlers should catch this and return 401 JSON.
+ */
+export class ApiKeyError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'ApiKeyError'
   }
 }

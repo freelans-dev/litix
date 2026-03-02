@@ -1,0 +1,769 @@
+openapi: "3.1.0"
+info:
+  title: Litix API
+  version: "1.0.0"
+  description: |
+    API da Litix para monitoramento de processos judiciais brasileiros.
+    Cadastre processos por CNJ, receba alertas de movimentacoes, gerencie clientes e webhooks.
+
+    ## Autenticacao
+    Use `Authorization: Bearer ltx_...` com sua API key.
+    Crie chaves em **Configuracoes > API Keys** ou via `POST /api/v1/api-keys`.
+
+servers:
+  - url: https://app.litix.com.br/api/v1
+    description: Producao
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: "API key (ltx_...) ou token de sessao Supabase"
+
+  parameters:
+    page:
+      name: page
+      in: query
+      schema: { type: integer, default: 1, minimum: 1 }
+    limit:
+      name: limit
+      in: query
+      schema: { type: integer, default: 50, maximum: 100 }
+
+  responses:
+    Unauthorized:
+      description: Nao autenticado
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string, example: "Unauthorized" }
+    Forbidden:
+      description: Sem permissao
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string, example: "Forbidden" }
+    NotFound:
+      description: Recurso nao encontrado
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string, example: "Not found" }
+    ValidationError:
+      description: Erro de validacao
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string }
+              details: { type: object }
+    RateLimited:
+      description: Rate limit excedido
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string, example: "Rate limit exceeded" }
+
+  schemas:
+    Case:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        cnj: { type: string, example: "00012345620248260100" }
+        tribunal: { type: string, nullable: true }
+        nome_caso: { type: string, nullable: true }
+        classe: { type: string, nullable: true }
+        area: { type: string, nullable: true }
+        assunto_principal: { type: string, nullable: true }
+        status: { type: string, nullable: true, enum: [ativo, finalizado, arquivado, suspenso] }
+        fase: { type: string, nullable: true }
+        juiz: { type: string, nullable: true }
+        valor_causa: { type: number, nullable: true }
+        data_distribuicao: { type: string, format: date, nullable: true }
+        autor_principal: { type: string, nullable: true }
+        reu_principal: { type: string, nullable: true }
+        monitor_enabled: { type: boolean }
+        movement_count: { type: integer, nullable: true }
+        ultimo_step_date: { type: string, format: date-time, nullable: true }
+        completeness: { type: number, nullable: true }
+        provider: { type: string, nullable: true }
+        merged_from: { type: array, items: { type: string }, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    CaseCreate:
+      type: object
+      required: [cnj]
+      properties:
+        cnj: { type: string, minLength: 20, maxLength: 25 }
+        tribunal: { type: string }
+        monitor_enabled: { type: boolean, default: true }
+        provider: { type: string, enum: [datajud, codilo, escavador, judit, predictus] }
+
+    CaseUpdate:
+      type: object
+      properties:
+        client_id: { type: string, format: uuid, nullable: true }
+        cliente: { type: string }
+        responsavel: { type: string }
+        setor: { type: string }
+        contingencia: { type: string, enum: [ativa, passiva] }
+        probabilidade: { type: string, enum: [provavel, possivel, remota] }
+        risco: { type: string, enum: [baixo, medio, alto, critico] }
+        provisionamento: { type: number, minimum: 0 }
+        reserva: { type: number, minimum: 0 }
+        notes: { type: string, maxLength: 2000 }
+
+    Client:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        tipo_pessoa: { type: string, nullable: true, enum: [fisica, juridica] }
+        documento: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+
+    ClientCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 200 }
+        tipo_pessoa: { type: string, enum: [fisica, juridica] }
+        documento: { type: string, pattern: '^\d{11}$|^\d{14}$' }
+        email: { type: string, format: email }
+        phone: { type: string }
+        notes: { type: string, maxLength: 2000 }
+
+    Alert:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, enum: [new_movement, deadline_approaching, status_change] }
+        title: { type: string }
+        body: { type: string, nullable: true }
+        cnj: { type: string, nullable: true }
+        case_id: { type: string, format: uuid, nullable: true }
+        is_read: { type: boolean }
+        created_at: { type: string, format: date-time }
+
+    WebhookEndpoint:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        url: { type: string, format: uri }
+        events: { type: array, items: { type: string } }
+        is_active: { type: boolean }
+        secret: { type: string }
+        created_at: { type: string, format: date-time }
+
+    WebhookCreate:
+      type: object
+      required: [name, url, events]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 80 }
+        url: { type: string, format: uri }
+        events:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [process.movement, process.deadline, process.status, process.updated]
+
+    ExposureScore:
+      type: object
+      properties:
+        score: { type: number, minimum: 0, maximum: 100 }
+        level: { type: string, enum: [baixo, moderado, alto, critico] }
+        factors: { type: array, items: { type: object } }
+        summary: { type: object }
+        narrative: { type: string, nullable: true }
+        case_count: { type: integer }
+
+    ApiKey:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        key_prefix: { type: string }
+        is_active: { type: boolean }
+        last_used_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+
+paths:
+  /cases:
+    get:
+      summary: Listar processos
+      tags: [Cases]
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+          description: Busca por CNJ, tribunal ou nome
+        - name: monitor
+          in: query
+          schema: { type: boolean }
+          description: Filtrar por monitoramento ativo/inativo
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        "200":
+          description: Lista paginada de processos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Case' } }
+                  count: { type: integer }
+                  page: { type: integer }
+                  limit: { type: integer }
+    post:
+      summary: Cadastrar processo
+      tags: [Cases]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CaseCreate' }
+      responses:
+        "201":
+          description: Processo cadastrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Case' }
+        "409":
+          description: Processo ja cadastrado
+        "402":
+          description: Limite do plano atingido
+
+  /cases/{cnj}:
+    parameters:
+      - name: cnj
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      summary: Detalhe do processo
+      tags: [Cases]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Case' }
+        "404": { $ref: '#/components/responses/NotFound' }
+    patch:
+      summary: Atualizar dados do escritorio
+      tags: [Cases]
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CaseUpdate' }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Case' }
+    delete:
+      summary: Remover processo
+      tags: [Cases]
+      responses:
+        "204": { description: Removido }
+
+  /cases/{cnj}/monitor:
+    parameters:
+      - name: cnj
+        in: path
+        required: true
+        schema: { type: string }
+    patch:
+      summary: Ativar/desativar monitoramento
+      tags: [Cases]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [monitor_enabled]
+              properties:
+                monitor_enabled: { type: boolean }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Case' }
+
+  /cases/{cnj}/refresh:
+    parameters:
+      - name: cnj
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      summary: Atualizar processo manualmente
+      tags: [Cases]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  queued: { type: boolean }
+                  cnj: { type: string }
+                  updated: { type: boolean }
+
+  /cases/{cnj}/ai-summary:
+    parameters:
+      - name: cnj
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      summary: Gerar resumo IA do processo
+      tags: [Cases]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type: { type: string, enum: [movements, timeline], default: movements }
+      responses:
+        "200":
+          description: Resumo gerado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary: { type: string }
+                  timeline: { type: string }
+
+  /clients:
+    get:
+      summary: Listar clientes
+      tags: [Clients]
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: active
+          in: query
+          schema: { type: boolean, default: true }
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Client' } }
+                  count: { type: integer }
+                  page: { type: integer }
+                  limit: { type: integer }
+    post:
+      summary: Criar cliente
+      tags: [Clients]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClientCreate' }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+        "409":
+          description: Documento ja cadastrado
+
+  /clients/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      summary: Detalhe do cliente
+      tags: [Clients]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+    patch:
+      summary: Atualizar cliente
+      tags: [Clients]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+    delete:
+      summary: Desativar cliente
+      tags: [Clients]
+      responses:
+        "204": { description: Desativado }
+
+  /clients/{id}/exposure-score:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      summary: Score de exposicao juridica
+      tags: [Clients]
+      parameters:
+        - name: ai
+          in: query
+          schema: { type: boolean }
+          description: Incluir analise narrativa por IA
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExposureScore' }
+
+  /alerts:
+    get:
+      summary: Listar alertas
+      tags: [Alerts]
+      parameters:
+        - name: filter
+          in: query
+          schema: { type: string, enum: [unread, deadline] }
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Alert' } }
+                  count: { type: integer }
+    patch:
+      summary: Marcar todos como lidos
+      tags: [Alerts]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+
+  /alerts/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      summary: Marcar alerta como lido/nao lido
+      tags: [Alerts]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                read: { type: boolean }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Alert' }
+
+  /webhooks:
+    get:
+      summary: Listar webhooks
+      tags: [Webhooks]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/WebhookEndpoint' }
+    post:
+      summary: Criar webhook
+      tags: [Webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WebhookCreate' }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WebhookEndpoint' }
+
+  /webhooks/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      summary: Atualizar webhook
+      tags: [Webhooks]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WebhookEndpoint' }
+    delete:
+      summary: Remover webhook
+      tags: [Webhooks]
+      responses:
+        "204": { description: Removido }
+
+  /team/members:
+    get:
+      summary: Listar membros da equipe
+      tags: [Team]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  members: { type: array }
+                  total: { type: integer }
+
+  /team/invite:
+    post:
+      summary: Convidar membro
+      tags: [Team]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email: { type: string, format: email }
+                role: { type: string, enum: [admin, member, viewer] }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  email: { type: string }
+
+  /profile:
+    get:
+      summary: Perfil do usuario
+      tags: [Profile]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string }
+                  full_name: { type: string, nullable: true }
+                  email: { type: string, nullable: true }
+                  phone: { type: string, nullable: true }
+    patch:
+      summary: Atualizar perfil
+      tags: [Profile]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name: { type: string }
+                phone: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+
+  /oab:
+    get:
+      summary: Listar importacoes OAB
+      tags: [Searches]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array }
+    post:
+      summary: Importar processos por OAB
+      tags: [Searches]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [oab_number, oab_state]
+              properties:
+                oab_number: { type: string, pattern: '^\d+$' }
+                oab_state: { type: string, minLength: 2, maxLength: 2 }
+      responses:
+        "201":
+          description: Importacao iniciada
+    delete:
+      summary: Remover importacao OAB
+      tags: [Searches]
+      parameters:
+        - name: oab_number
+          in: query
+          required: true
+          schema: { type: string }
+        - name: oab_uf
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: Removido }
+
+  /document-search:
+    get:
+      summary: Listar buscas por documento
+      tags: [Searches]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array }
+    post:
+      summary: Buscar processos por CPF/CNPJ
+      tags: [Searches]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [document_type, document_value]
+              properties:
+                document_type: { type: string, enum: [cpf, cnpj] }
+                document_value: { type: string, pattern: '^\d{11}$|^\d{14}$' }
+                client_id: { type: string, format: uuid }
+      responses:
+        "201":
+          description: Busca iniciada
+
+  /analytics/providers:
+    get:
+      summary: Analytics de uso dos providers
+      tags: [Analytics]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary: { type: object }
+                  providerUsage: { type: array }
+                  dailyUsage: { type: array }
+                  successRates: { type: array }
+                  topTribunals: { type: array }
+
+  /api-keys:
+    get:
+      summary: Listar API keys
+      tags: [API Keys]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/ApiKey' } }
+    post:
+      summary: Criar API key
+      description: A chave completa e retornada apenas uma vez nesta resposta.
+      tags: [API Keys]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, default: "Default" }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/ApiKey' }
+                  - type: object
+                    properties:
+                      api_key: { type: string, description: "Chave completa (exibida uma unica vez)" }
+                      warning: { type: string }
+
+  /api-keys/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      summary: Atualizar API key
+      tags: [API Keys]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                is_active: { type: boolean }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiKey' }
+    delete:
+      summary: Revogar API key
+      tags: [API Keys]
+      responses:
+        "204": { description: Revogada }

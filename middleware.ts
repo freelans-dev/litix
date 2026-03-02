@@ -10,6 +10,13 @@ export async function middleware(request: NextRequest) {
 
   // --- Rotas de API: /api/v1/** (exceto /api/v1/auth/**) ---
   if (pathname.startsWith('/api/v1/')) {
+    const authHeader = request.headers.get('authorization')
+
+    // API key auth: Bearer ltx_... — let through, resolved in getTenantContext
+    if (authHeader?.startsWith('Bearer ltx_')) {
+      return NextResponse.next()
+    }
+
     const isPublicApi = PUBLIC_API_ROUTES.some((p) => pathname.startsWith(p))
     if (!isPublicApi && !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

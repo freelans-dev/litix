@@ -12,6 +12,7 @@ import {
   Building2,
   CreditCard,
   BarChart3,
+  Code,
   Search,
   Settings,
   ChevronDown,
@@ -48,6 +49,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/dashboard/settings/webhooks', label: 'Webhooks', icon: Webhook },
   { href: '/dashboard/settings/team', label: 'Equipe', icon: Users },
+  { href: '/dashboard/docs', label: 'API Docs', icon: Code },
   { href: '/dashboard/billing', label: 'Assinatura', icon: CreditCard },
 ]
 
