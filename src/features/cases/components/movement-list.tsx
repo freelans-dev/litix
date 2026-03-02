@@ -28,33 +28,66 @@ export async function MovementList({
 }: MovementListProps) {
   const supabase = await createTenantClient(tenantId, userId)
 
-  let query = supabase
-    .from('case_movements')
-    .select('id, movement_date, description, type, category')
-    .eq('case_id', caseId)
-    .order('movement_date', { ascending: false })
-    .limit(50)
+  // Try with category column; fall back to without if migration 009 not applied
+  let movements: Array<{
+    id: string
+    movement_date: string
+    description: string
+    type: string | null
+    category?: string | null
+  }> | null = null
+  let hasCategory = true
 
-  if (activeCategory && activeCategory !== 'todos') {
-    query = query.eq('category', activeCategory)
+  {
+    let query = supabase
+      .from('case_movements')
+      .select('id, movement_date, description, type, category')
+      .eq('case_id', caseId)
+      .order('movement_date', { ascending: false })
+      .limit(50)
+
+    if (activeCategory && activeCategory !== 'todos') {
+      query = query.eq('category', activeCategory)
+    }
+
+    const result = await query
+    if (result.error) {
+      hasCategory = false
+      const fallback = await supabase
+        .from('case_movements')
+        .select('id, movement_date, description, type')
+        .eq('case_id', caseId)
+        .order('movement_date', { ascending: false })
+        .limit(50)
+      movements = fallback.data
+    } else {
+      movements = result.data
+    }
   }
 
-  const { data: movements } = await query
-
-  // Get category counts for the pills
-  const { data: categoryCounts } = await supabase
-    .from('case_movements')
-    .select('category')
-    .eq('case_id', caseId)
-
+  // Get category counts for the pills (only if column exists)
   const countMap: Record<string, number> = {}
   let total = 0
-  if (categoryCounts) {
-    for (const row of categoryCounts) {
-      const cat = row.category ?? 'outros'
-      countMap[cat] = (countMap[cat] ?? 0) + 1
-      total++
+  if (hasCategory) {
+    const { data: categoryCounts } = await supabase
+      .from('case_movements')
+      .select('category')
+      .eq('case_id', caseId)
+
+    if (categoryCounts) {
+      for (const row of categoryCounts) {
+        const cat = row.category ?? 'outros'
+        countMap[cat] = (countMap[cat] ?? 0) + 1
+        total++
+      }
     }
+  } else {
+    // Count total without category breakdown
+    const { count } = await supabase
+      .from('case_movements')
+      .select('id', { count: 'exact', head: true })
+      .eq('case_id', caseId)
+    total = count ?? 0
   }
 
   const hiddenCategories = ALL_CATEGORIES.filter(
