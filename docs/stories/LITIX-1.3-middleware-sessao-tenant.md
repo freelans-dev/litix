@@ -1,7 +1,7 @@
 # Story LITIX-1.3: Middleware Next.js de Sessao e Tenant
 
 **Epic:** Epic 1 - Fundacao Multi-Tenant e Autenticacao
-**Status:** Draft
+**Status:** Done
 **Prioridade:** Must
 **Estimativa:** 5 pontos
 **Dependencias:** LITIX-1.1, LITIX-1.2
@@ -20,15 +20,15 @@ O Next.js App Router usa `middleware.ts` na raiz do projeto para interceptar tod
 
 ## Acceptance Criteria
 
-- [ ] AC1: `middleware.ts` na raiz interceta todas as requests para `/dashboard/**` e `/api/v1/**`
-- [ ] AC2: Requests sem sessao valida para `/dashboard/**` sao redirecionadas para `/login`
-- [ ] AC3: Requests sem sessao valida para `/api/v1/**` retornam 401 JSON
-- [ ] AC4: Rotas publicas (`/login`, `/signup`, `/invite/**`, `/api/v1/auth/**`) sao liberadas sem validacao
-- [ ] AC5: Middleware injeta headers `x-tenant-id` e `x-user-role` nas requests para consumo em Server Components
-- [ ] AC6: Token expirado dispara refresh automatico via `supabase.auth.getSession()` — se refresh falhar, redireciona para login
-- [ ] AC7: `matcher` do middleware configurado para excluir assets estaticos (`_next/`, `favicon.ico`, imagens)
-- [ ] AC8: Funcao `createServerClient` de `@supabase/ssr` usada corretamente com cookies do Next.js
-- [ ] AC9: Testes unitarios do middleware com requests mockadas
+- [x] AC1: `middleware.ts` na raiz interceta todas as requests para `/dashboard/**` e `/api/v1/**`
+- [x] AC2: Requests sem sessao valida para `/dashboard/**` sao redirecionadas para `/login`
+- [x] AC3: Requests sem sessao valida para `/api/v1/**` retornam 401 JSON
+- [x] AC4: Rotas publicas (`/login`, `/signup`, `/invite/**`, `/api/v1/auth/**`) sao liberadas sem validacao
+- [x] AC5: Middleware injeta headers `x-tenant-id` e `x-user-role` nas requests para consumo em Server Components
+- [x] AC6: Token expirado dispara refresh automatico via `supabase.auth.getSession()` — se refresh falhar, redireciona para login
+- [x] AC7: `matcher` do middleware configurado para excluir assets estaticos (`_next/`, `favicon.ico`, imagens)
+- [x] AC8: Funcao `createServerClient` de `@supabase/ssr` usada corretamente com cookies do Next.js
+- [x] AC9: Testes unitarios do middleware com requests mockadas
 
 ---
 
@@ -149,24 +149,24 @@ src/
 
 ## Tasks
 
-- [ ] Task 1: Implementar `middleware.ts`
-  - [ ] Subtask 1.1: Criar `middleware.ts` na raiz com logica de protecao de rotas
-  - [ ] Subtask 1.2: Configurar `matcher` para excluir assets estaticos
-  - [ ] Subtask 1.3: Adicionar injecao de headers `x-tenant-id` e `x-user-role`
+- [x] Task 1: Implementar `middleware.ts`
+  - [x] Subtask 1.1: Criar `middleware.ts` na raiz com logica de protecao de rotas
+  - [x] Subtask 1.2: Configurar `matcher` para excluir assets estaticos
+  - [x] Subtask 1.3: Adicionar injecao de headers `x-tenant-id` e `x-user-role`
 
-- [ ] Task 2: Implementar helpers de server client
-  - [ ] Subtask 2.1: Criar `src/lib/supabase/server.ts` com `createClient()`, `getCurrentUser()`, `getTenantContext()`
-  - [ ] Subtask 2.2: Criar `src/hooks/use-tenant-context.ts` para client components
+- [x] Task 2: Implementar helpers de server client
+  - [x] Subtask 2.1: Criar `src/lib/supabase/server.ts` com `createClient()`, `getCurrentUser()`, `getTenantContext()`
+  - [x] Subtask 2.2: Criar `src/hooks/use-tenant-context.ts` para client components
 
-- [ ] Task 3: Configurar layouts protegidos
-  - [ ] Subtask 3.1: Criar `src/app/dashboard/layout.tsx` que verifica autenticacao via `getCurrentUser()`
-  - [ ] Subtask 3.2: Criar `src/app/(auth)/layout.tsx` que redireciona para dashboard se ja logado
+- [x] Task 3: Configurar layouts protegidos
+  - [x] Subtask 3.1: Criar `src/app/dashboard/layout.tsx` que verifica autenticacao via `getCurrentUser()`
+  - [x] Subtask 3.2: Criar `src/app/(auth)/layout.tsx` que redireciona para dashboard se ja logado
 
-- [ ] Task 4: Testes
-  - [ ] Subtask 4.1: Teste: request sem cookie para `/dashboard` redireciona para `/login`
-  - [ ] Subtask 4.2: Teste: request sem cookie para `/api/v1/processes` retorna 401
-  - [ ] Subtask 4.3: Teste: request com JWT valido para `/dashboard` passa pelo middleware
-  - [ ] Subtask 4.4: Teste: headers `x-tenant-id` e `x-user-role` presentes em requests autenticadas
+- [x] Task 4: Testes
+  - [x] Subtask 4.1: Teste: request sem cookie para `/dashboard` redireciona para `/login`
+  - [x] Subtask 4.2: Teste: request sem cookie para `/api/v1/processes` retorna 401
+  - [x] Subtask 4.3: Teste: request com JWT valido para `/dashboard` passa pelo middleware
+  - [x] Subtask 4.4: Teste: headers `x-tenant-id` e `x-user-role` presentes em requests autenticadas
 
 ---
 
@@ -185,9 +185,9 @@ src/
 
 ## Definition of Done
 
-- [ ] `middleware.ts` implementado e testado
-- [ ] Helpers de server client criados
-- [ ] Layouts protegidos configurados
-- [ ] Testes passando
-- [ ] Code review aprovado
-- [ ] Story status: Ready for Review
+- [x] `middleware.ts` implementado e testado
+- [x] Helpers de server client criados
+- [x] Layouts protegidos configurados
+- [x] Testes passando
+- [x] Code review aprovado
+- [x] Story status: Ready for Review

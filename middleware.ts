@@ -1,11 +1,22 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
+// Rotas de API públicas (sem autenticação)
+const PUBLIC_API_ROUTES = ['/api/v1/auth/']
+
 export async function middleware(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request)
   const { pathname } = request.nextUrl
 
-  // Rotas protegidas — redireciona para login se não autenticado
+  // --- Rotas de API: /api/v1/** (exceto /api/v1/auth/**) ---
+  if (pathname.startsWith('/api/v1/')) {
+    const isPublicApi = PUBLIC_API_ROUTES.some((p) => pathname.startsWith(p))
+    if (!isPublicApi && !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+  }
+
+  // --- Dashboard: redireciona para login se não autenticado ---
   if (pathname.startsWith('/dashboard') && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
@@ -13,11 +24,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Rotas de auth — redireciona para dashboard se já autenticado
+  // --- Auth pages: redireciona para dashboard se já autenticado ---
   if (pathname.startsWith('/auth/login') || pathname.startsWith('/auth/signup')) {
     if (user) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
+  }
+
+  // --- Injeta headers com contexto do tenant (AC5) ---
+  if (user) {
+    const tenantId = user.app_metadata?.tenant_id as string | undefined
+    const role = user.app_metadata?.role as string | undefined
+    supabaseResponse.headers.set('x-tenant-id', tenantId ?? '')
+    supabaseResponse.headers.set('x-user-role', role ?? '')
   }
 
   return supabaseResponse

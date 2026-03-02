@@ -26,3 +26,20 @@ export async function createClient() {
     }
   )
 }
+
+export async function getCurrentUser() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
+}
+
+export async function getServerTenantContext() {
+  const user = await getCurrentUser()
+  if (!user) return null
+  return {
+    tenantId: user.app_metadata?.tenant_id as string,
+    role: user.app_metadata?.role as string,
+    memberId: user.app_metadata?.member_id as string,
+    userId: user.id,
+  }
+}
