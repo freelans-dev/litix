@@ -936,6 +936,42 @@ export interface Database {
         }
         Relationships: []
       }
+      case_summaries: {
+        Row: {
+          id: string
+          tenant_id: string
+          case_id: string
+          summary_type: string
+          content: string
+          movement_count: number
+          last_movement_date: string | null
+          generated_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          case_id: string
+          summary_type?: string
+          content: string
+          movement_count?: number
+          last_movement_date?: string | null
+          generated_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          case_id?: string
+          summary_type?: string
+          content?: string
+          movement_count?: number
+          last_movement_date?: string | null
+          generated_at?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           id: number
