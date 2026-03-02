@@ -92,8 +92,10 @@ Retorne APENAS o JSON, sem texto antes ou depois.`
       messages: [{ role: 'user', content: prompt }],
     })
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : ''
-    const parsed = JSON.parse(text.trim()) as MovementSummaryResult
+    const raw = response.content[0].type === 'text' ? response.content[0].text : ''
+    // Strip markdown code blocks if model wraps response (e.g. ```json ... ```)
+    const clean = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+    const parsed = JSON.parse(clean) as MovementSummaryResult
     return parsed
   } catch (err) {
     console.error('[ai-summarizer] Failed to summarize movements:', err)
