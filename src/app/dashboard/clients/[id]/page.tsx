@@ -20,6 +20,7 @@ import {
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { DocumentSearchForm } from '@/features/cases/components/document-search-form'
+import { ExposureScoreCard } from '@/features/clients/components/exposure-score-card'
 
 export const dynamic = 'force-dynamic'
 
@@ -262,6 +263,11 @@ export default async function ClientDetailPage(props: {
           </div>
         </div>
       </div>
+
+      {/* Exposure Score */}
+      {cases && cases.length > 0 && (
+        <ExposureScoreCard clientId={client.id} />
+      )}
     </div>
   )
 }

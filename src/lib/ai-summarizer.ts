@@ -102,6 +102,84 @@ Retorne APENAS o JSON, sem texto antes ou depois.`
 }
 
 /**
+ * Generates an AI narrative analysis for a client's legal exposure score.
+ */
+export async function generateExposureAnalysis(
+  scoreResult: {
+    score: number
+    level: string
+    factors: Array<{ name: string; raw: number; detail: string }>
+    summary: {
+      total_cases: number
+      active_cases: number
+      total_valor_ativo: number
+      cases_provavel: number
+      cases_critico_alto: number
+      cases_passiva: number
+      cases_execucao: number
+      areas: Record<string, number>
+      max_valor: number
+    }
+  },
+  clientName: string
+): Promise<string | null> {
+  const client = getClient()
+  if (!client) return null
+
+  const factorLines = scoreResult.factors
+    .map((f) => `- ${f.name}: ${Math.round(f.raw)}/100 — ${f.detail}`)
+    .join('\n')
+
+  const areaLines = Object.entries(scoreResult.summary.areas)
+    .map(([area, count]) => `${area}: ${count} caso(s)`)
+    .join(', ')
+
+  const valorFormatted = scoreResult.summary.total_valor_ativo.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+  })
+
+  const prompt = `Voce e um advogado senior especializado em gestao de risco juridico empresarial.
+
+Analise a carteira de processos do cliente "${clientName}" e forneca uma analise de risco objetiva.
+
+Score de Exposicao: ${scoreResult.score}/100 (${scoreResult.level})
+
+Fatores de risco calculados:
+${factorLines}
+
+Portfolio resumido:
+- Total de processos: ${scoreResult.summary.total_cases} (${scoreResult.summary.active_cases} ativos)
+- Valor total das causas ativas: R$ ${valorFormatted}
+- Causas com probabilidade provavel: ${scoreResult.summary.cases_provavel}
+- Causas de risco alto/critico: ${scoreResult.summary.cases_critico_alto}
+- Causas passivas (reu): ${scoreResult.summary.cases_passiva}
+- Causas em fase de execucao: ${scoreResult.summary.cases_execucao}
+- Areas: ${areaLines || 'N/A'}
+
+Escreva uma analise narrativa em 3-4 paragrafos curtos cobrindo:
+1. Avaliacao geral do nivel de exposicao juridica
+2. Principais fatores de risco identificados (cite numeros concretos)
+3. Areas de maior preocupacao e por que
+4. Recomendacoes praticas de gestao de risco
+
+Use linguagem direta e objetiva. Evite jargao excessivo. Seja especifico com os numeros.
+Retorne apenas o texto da analise, sem titulos ou formatacao markdown.`
+
+  try {
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1200,
+      messages: [{ role: 'user', content: prompt }],
+    })
+    const text = response.content[0].type === 'text' ? response.content[0].text : ''
+    return text.trim() || null
+  } catch (err) {
+    console.error('[ai-summarizer] Failed to generate exposure analysis:', err)
+    return null
+  }
+}
+
+/**
  * Generates a complete case timeline summary from all movements.
  * Used on the case detail page.
  */
