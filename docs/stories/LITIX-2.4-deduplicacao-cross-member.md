@@ -1,7 +1,7 @@
 # Story LITIX-2.4: Deduplicacao e Associacao Cross-Member no Escritorio
 
 **Epic:** Epic 2 - Import Automatico por OAB
-**Status:** Draft
+**Status:** Done
 **Prioridade:** Must
 **Estimativa:** 5 pontos
 **Dependencias:** LITIX-2.2
@@ -20,12 +20,12 @@ Em escritorios com multiplos advogados, e comum que mais de um membro atue no me
 
 ## Acceptance Criteria
 
-- [ ] AC1: Tabela `case_members` criada com `case_id`, `member_id`, `role` (lead/collaborator), vinculando membros a processos
-- [ ] AC2: Durante importacao por OAB, se processo ja existe no tenant (mesmo CNJ), cria apenas o vinculo em `case_members` sem duplicar o processo
-- [ ] AC3: Processo aparece uma unica vez no dashboard do escritorio, mas na visao de cada advogado aparece com seu nome/badge
-- [ ] AC4: Processo com 2+ advogados mostra todos os responsaveis (avatares empilhados)
-- [ ] AC5: Filtro "Meus processos" no dashboard retorna apenas processos onde o membro logado tem vinculo em `case_members`
-- [ ] AC6: Remover vinculo de um membro do processo nao exclui o processo do tenant (apenas o vinculo)
+- [x]AC1: Tabela `case_members` criada com `case_id`, `member_id`, `role` (lead/collaborator), vinculando membros a processos
+- [x]AC2: Durante importacao por OAB, se processo ja existe no tenant (mesmo CNJ), cria apenas o vinculo em `case_members` sem duplicar o processo
+- [x]AC3: Processo aparece uma unica vez no dashboard do escritorio, mas na visao de cada advogado aparece com seu nome/badge
+- [x]AC4: Processo com 2+ advogados mostra todos os responsaveis (avatares empilhados)
+- [x]AC5: Filtro "Meus processos" no dashboard retorna apenas processos onde o membro logado tem vinculo em `case_members`
+- [x]AC6: Remover vinculo de um membro do processo nao exclui o processo do tenant (apenas o vinculo)
 
 ---
 
@@ -97,31 +97,31 @@ src/
 
 ## Tasks
 
-- [ ] Task 1: Criar migration de `case_members`
-  - [ ] Subtask 1.1: Migration com schema, indexes e RLS
+- [x]Task 1: Criar migration de `case_members`
+  - [x]Subtask 1.1: Migration com schema, indexes e RLS
 
-- [ ] Task 2: Atualizar job de importacao (LITIX-2.2)
-  - [ ] Subtask 2.1: Logica de upsert com verificacao de processo existente
-  - [ ] Subtask 2.2: Criar vinculo em `case_members` para todos os casos (novos e existentes)
+- [x]Task 2: Atualizar job de importacao (LITIX-2.2)
+  - [x]Subtask 2.1: Logica de upsert com verificacao de processo existente
+  - [x]Subtask 2.2: Criar vinculo em `case_members` para todos os casos (novos e existentes)
 
-- [ ] Task 3: Atualizar queries de listagem
-  - [ ] Subtask 3.1: Query de dashboard do escritorio: JOIN com `case_members` para mostrar responsaveis
-  - [ ] Subtask 3.2: Filtro "Meus processos": WHERE case_members.member_id = auth.member_id()
-  - [ ] Subtask 3.3: Componente `case-members-avatars.tsx`
+- [x]Task 3: Atualizar queries de listagem
+  - [x]Subtask 3.1: Query de dashboard do escritorio: JOIN com `case_members` para mostrar responsaveis
+  - [x]Subtask 3.2: Filtro "Meus processos": WHERE case_members.member_id = auth.member_id()
+  - [x]Subtask 3.3: Componente `case-members-avatars.tsx`
 
-- [ ] Task 4: Testes
-  - [ ] Subtask 4.1: Importar mesma OAB 2 advogados — processo aparece 1x com 2 responsaveis
-  - [ ] Subtask 4.2: Filtro "Meus processos" mostra apenas processos do membro logado
-  - [ ] Subtask 4.3: Remover vinculo nao exclui o processo
+- [x]Task 4: Testes
+  - [x]Subtask 4.1: Importar mesma OAB 2 advogados — processo aparece 1x com 2 responsaveis
+  - [x]Subtask 4.2: Filtro "Meus processos" mostra apenas processos do membro logado
+  - [x]Subtask 4.3: Remover vinculo nao exclui o processo
 
 ---
 
 ## Definition of Done
 
-- [ ] Tabela `case_members` criada com RLS
-- [ ] Importacao com deduplicacao cross-member funcionando
-- [ ] UI exibe responsaveis multiplos corretamente
-- [ ] Filtros por membro funcionando
-- [ ] Testes passando
-- [ ] Code review aprovado
-- [ ] Story status: Ready for Review
+- [x]Tabela `case_members` criada com RLS
+- [x]Importacao com deduplicacao cross-member funcionando
+- [x]UI exibe responsaveis multiplos corretamente
+- [x]Filtros por membro funcionando
+- [x]Testes passando
+- [x]Code review aprovado
+- [x]Story status: Ready for Review

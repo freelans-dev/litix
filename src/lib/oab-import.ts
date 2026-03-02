@@ -13,6 +13,14 @@ import { mapResponseData, buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
 import { trackProviderQuery } from '@/lib/provider-tracking'
 import { classifyMovement } from '@/lib/movement-classifier'
 
+// Local type until DB types are regenerated with role column
+interface CaseMemberInsert {
+  tenant_id: string
+  case_id: string
+  member_id: string
+  role: 'lead' | 'collaborator'
+}
+
 const JUDIT_API_KEY = process.env.JUDIT_API_KEY!
 const REQUESTS_URL = 'https://requests.prod.judit.io'
 
@@ -142,6 +150,26 @@ export async function runOabImport(importId: string): Promise<void> {
         if (!cnj) continue
 
         if (existingCnjs.has(cnj)) {
+          // Processo já existe — criar apenas vínculo como collaborator
+          const { data: existingCase } = await supabase
+            .from('monitored_cases')
+            .select('id')
+            .eq('tenant_id', importRec.tenant_id)
+            .eq('cnj', cnj)
+            .single()
+
+          if (existingCase) {
+            const collaboratorLink: CaseMemberInsert = {
+              tenant_id: importRec.tenant_id,
+              case_id: existingCase.id,
+              member_id: importRec.member_id,
+              role: 'collaborator',
+            }
+            await supabase
+              .from('case_members')
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .upsert(collaboratorLink as unknown as any, { onConflict: 'case_id,member_id', ignoreDuplicates: true })
+          }
           casesDeduplicated++
           continue
         }
@@ -170,6 +198,20 @@ export async function runOabImport(importId: string): Promise<void> {
 
         casesImported++
         existingCnjs.add(cnj)
+
+        // Create case_members link (lead role for new cases)
+        if (inserted) {
+          const leadLink: CaseMemberInsert = {
+            tenant_id: importRec.tenant_id,
+            case_id: inserted.id,
+            member_id: importRec.member_id,
+            role: 'lead',
+          }
+          await supabase
+            .from('case_members')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .upsert(leadLink as unknown as any, { onConflict: 'case_id,member_id', ignoreDuplicates: true })
+        }
 
         // Save movements
         if (inserted && juditData.movimentos && juditData.movimentos.length > 0) {
