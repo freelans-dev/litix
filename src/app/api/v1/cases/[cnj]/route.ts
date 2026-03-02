@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createTenantClient } from '@/lib/supabase/tenant'
 import { getTenantContext } from '@/lib/auth'
 import { dispatchWebhooks } from '@/lib/webhook-dispatcher'
+import { getCachedProcess, setCachedProcess } from '@/lib/cache'
 import { z } from 'zod'
 
 const patchSchema = z.object({
@@ -31,6 +32,9 @@ export async function GET(
   const ctx = await getTenantContext()
   if (!ctx.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const cached = await getCachedProcess(ctx.tenantId, cnj)
+  if (cached) return NextResponse.json(cached)
+
   const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
   const { data, error } = await supabase
     .from('monitored_cases')
@@ -41,6 +45,8 @@ export async function GET(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  await setCachedProcess(ctx.tenantId, cnj, data as Record<string, unknown>)
 
   return NextResponse.json(data)
 }

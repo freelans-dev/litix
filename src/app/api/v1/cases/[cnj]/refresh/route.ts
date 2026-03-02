@@ -6,6 +6,7 @@ import { fetchCaseFromJudit, buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
 import { dispatchWebhooks } from '@/lib/webhook-dispatcher'
 import { generateAlerts } from '@/lib/alert-generator'
 import { classifyMovement } from '@/lib/movement-classifier'
+import { invalidateProcessCache } from '@/lib/cache'
 
 // POST /api/v1/cases/:caseId/refresh — trigger immediate consultation from Judit
 export async function POST(
@@ -18,6 +19,8 @@ export async function POST(
 
   const { allowed } = await checkRateLimit(ctx.tenantId, ctx.plan)
   if (!allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+
+  await invalidateProcessCache(ctx.tenantId, caseId)
 
   const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
