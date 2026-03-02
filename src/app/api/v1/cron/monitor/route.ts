@@ -4,6 +4,7 @@ import { buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
 import { fetchCase } from '@/lib/case-fetch'
 import { generateAlerts } from '@/lib/alert-generator'
 import { dispatchWebhooks } from '@/lib/webhook-dispatcher'
+import { classifyMovement } from '@/lib/movement-classifier'
 
 interface CaseToMonitor {
   id: string
@@ -132,6 +133,7 @@ export async function POST(req: NextRequest) {
           movement_date: m.data,
           description: m.descricao,
           type: m.tipo ?? null,
+          category: classifyMovement(m.tipo ?? null, m.descricao),
           code: m.codigo ?? null,
           provider: result.data.provider,
         }))

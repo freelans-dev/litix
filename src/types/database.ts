@@ -343,6 +343,7 @@ export interface Database {
           case_id: string
           movement_date: string
           type: string | null
+          category: string | null
           description: string
           content: string | null
           code: string | null
@@ -357,6 +358,7 @@ export interface Database {
           case_id: string
           movement_date: string
           type?: string | null
+          category?: string | null
           description: string
           content?: string | null
           code?: string | null
@@ -371,6 +373,7 @@ export interface Database {
           case_id?: string
           movement_date?: string
           type?: string | null
+          category?: string | null
           description?: string
           content?: string | null
           code?: string | null

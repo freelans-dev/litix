@@ -5,6 +5,7 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { fetchCaseFromJudit, buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
 import { dispatchWebhooks } from '@/lib/webhook-dispatcher'
 import { generateAlerts } from '@/lib/alert-generator'
+import { classifyMovement } from '@/lib/movement-classifier'
 
 // POST /api/v1/cases/:caseId/refresh — trigger immediate consultation from Judit
 export async function POST(
@@ -47,6 +48,7 @@ export async function POST(
         movement_date: m.data,
         description: m.descricao,
         type: m.tipo ?? null,
+        category: classifyMovement(m.tipo ?? null, m.descricao),
         code: m.codigo ?? null,
         provider: 'judit',
       }))

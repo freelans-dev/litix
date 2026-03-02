@@ -8,6 +8,7 @@ import { isValidCNJ } from '@/lib/crypto'
 import { buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
 import { fetchCase } from '@/lib/case-fetch'
 import { dispatchWebhooks } from '@/lib/webhook-dispatcher'
+import { classifyMovement } from '@/lib/movement-classifier'
 import { z } from 'zod'
 
 // GET /api/v1/cases — list monitored cases for tenant
@@ -134,6 +135,7 @@ export async function POST(req: NextRequest) {
         movement_date: m.data,
         description: m.descricao,
         type: m.tipo ?? null,
+        category: classifyMovement(m.tipo ?? null, m.descricao),
         code: m.codigo ?? null,
         provider: result.data.provider,
       }))

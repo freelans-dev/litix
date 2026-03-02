@@ -11,6 +11,7 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import { mapResponseData, buildCaseUpdateFromJudit } from '@/lib/judit-fetch'
 import { trackProviderQuery } from '@/lib/provider-tracking'
+import { classifyMovement } from '@/lib/movement-classifier'
 
 const JUDIT_API_KEY = process.env.JUDIT_API_KEY!
 const REQUESTS_URL = 'https://requests.prod.judit.io'
@@ -178,6 +179,7 @@ export async function runOabImport(importId: string): Promise<void> {
             movement_date: m.data,
             description: m.descricao,
             type: m.tipo ?? null,
+            category: classifyMovement(m.tipo ?? null, m.descricao),
             code: m.codigo ?? null,
             provider: 'judit',
           }))

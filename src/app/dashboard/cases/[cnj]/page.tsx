@@ -9,9 +9,9 @@ import { MonitorToggle } from '@/features/cases/components/monitor-toggle'
 import { RefreshButton } from '@/features/cases/components/refresh-button'
 import { EditOfficeDataSheet } from '@/features/cases/components/edit-office-data-sheet'
 import { AiCaseSummary } from '@/features/cases/components/ai-case-summary'
+import { MovementList } from '@/features/cases/components/movement-list'
 import {
   ArrowLeft,
-  Bell,
   BellOff,
   Briefcase,
   Calendar,
@@ -53,8 +53,10 @@ type Parte = {
 
 export default async function CaseDetailPage(props: {
   params: Promise<{ cnj: string }>
+  searchParams: Promise<{ category?: string }>
 }) {
   const { cnj } = await props.params
+  const searchParams = await props.searchParams
   const ctx = await getTenantContext()
   const supabase = await createTenantClient(ctx.tenantId, ctx.userId)
 
@@ -66,13 +68,6 @@ export default async function CaseDetailPage(props: {
     .maybeSingle()
 
   if (!caseData) notFound()
-
-  const { data: caseMovements } = await supabase
-    .from('case_movements')
-    .select('*')
-    .eq('case_id', caseData.id)
-    .order('movement_date', { ascending: false })
-    .limit(50)
 
   // Fetch team members for the responsavel select
   const { data: teamMembers } = await supabase
@@ -275,9 +270,7 @@ export default async function CaseDetailPage(props: {
       )}
 
       {/* AI Summary */}
-      {caseMovements && caseMovements.length > 0 && (
-        <AiCaseSummary cnj={caseData.cnj} />
-      )}
+      <AiCaseSummary cnj={caseData.cnj} />
 
       {/* Ultimo andamento */}
       {caseData.ultimo_andamento && (
@@ -423,47 +416,14 @@ export default async function CaseDetailPage(props: {
       )}
 
       {/* Movimentacoes */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold flex items-center gap-2">
-            <Bell size={16} />
-            Historico de movimentacoes
-            {caseMovements && caseMovements.length > 0 && (
-              <Badge variant="secondary" className="ml-1">{caseMovements.length}</Badge>
-            )}
-          </h2>
-        </div>
-
-        {caseMovements && caseMovements.length > 0 ? (
-          <div className="space-y-2">
-            {caseMovements.map((mov) => (
-              <div key={mov.id} className="rounded-lg border bg-card px-4 py-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm leading-relaxed">{mov.description}</p>
-                    {mov.type && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{mov.type}</p>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground shrink-0 mt-0.5">
-                    {format(new Date(mov.movement_date), "d MMM yyyy", { locale: ptBR })}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-lg border border-dashed bg-card p-10 text-center">
-            <Bell size={28} className="text-muted-foreground/30 mx-auto mb-3" />
-            <p className="font-medium">Nenhuma movimentacao registrada ainda</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {caseData.last_checked_at
-                ? 'Aguarde — o Litix esta buscando as movimentacoes.'
-                : 'Clique em "Atualizar" para buscar os dados agora.'}
-            </p>
-          </div>
-        )}
-      </div>
+      <MovementList
+        caseId={caseData.id}
+        tenantId={ctx.tenantId}
+        userId={ctx.userId}
+        activeCategory={searchParams.category}
+        caseSlug={cnj}
+        lastCheckedAt={caseData.last_checked_at}
+      />
 
       {/* Metadados */}
       <div className="rounded-lg border bg-card p-5 space-y-3">
